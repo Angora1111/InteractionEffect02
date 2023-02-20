@@ -7,6 +7,10 @@ using UnityEngine.Playables;
 public class GameManager : MonoBehaviour
 {
     // --- 定数 ---
+    private readonly Color color_Perfect = new Color(1, 1, 0);  // yellow
+    private readonly Color color_Good = new Color(0, 1, 0.255f);// green
+    private readonly Color color_Miss = new Color(0, 0.583f, 1);// rightBlue
+
     public enum ChangeMode
     {
         NONE,
@@ -47,6 +51,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject canvas;     // UI
     [SerializeField] Transform laneGroup;   // レーン全て
     [SerializeField] Transform judgeCircle; // 判定枠だけ
+    private SpriteRenderer judgeSr;         // 判定枠のSpriteRenderer
     public static EffectModeType effectMode_Type = EffectModeType.NONE; // 演出の種類
     public static EffectModeHold effectMode_Hold = EffectModeHold.NONE;
     private int orderNum_Type = 0;  // 順番管理 
@@ -79,6 +84,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        judgeSr = GameObject.Find("JudgeCircle").GetComponent<SpriteRenderer>();
         colorPreviews_appear = new List<Color>();
         colorPreviews_parge = new List<Color>();
         boolPreviews = new List<bool>();
@@ -294,6 +300,29 @@ public class GameManager : MonoBehaviour
         }
 
         orderNum_Hold++;
+    }
+
+    /// <summary>
+    /// 判定に合わせて判定枠の色を変更する
+    /// </summary>
+    /// <param name="judge">判定</param>
+    public void ShowJudge(EnumData.Judgement judge)
+    {
+        switch (judge)
+        {
+            case EnumData.Judgement.PERFECT:
+                Debug.Log("PERFECT!!");
+                judgeSr.color = color_Perfect;
+                break;
+            case EnumData.Judgement.GOOD:
+                Debug.Log("GOOD!");
+                judgeSr.color = color_Good;
+                break;
+            case EnumData.Judgement.MISS:
+                Debug.Log("MISS...");
+                judgeSr.color = color_Miss;
+                break;
+        }
     }
     #endregion
 
