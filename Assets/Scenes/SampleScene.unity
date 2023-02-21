@@ -2917,7 +2917,7 @@ GameObject:
   - component: {fileID: 364864271}
   m_Layer: 5
   m_Name: CustomWindow_BackBlack
-  m_TagString: Untagged
+  m_TagString: MoreRead
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4403,7 +4403,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 193, y: -12}
+  m_AnchoredPosition: {x: 193, y: -54}
   m_SizeDelta: {x: 270, y: 110}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &521805941
@@ -5053,7 +5053,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 800, y: -75}
+  m_AnchoredPosition: {x: 800, y: -115}
   m_SizeDelta: {x: 200, y: 165}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &590137625
@@ -10369,7 +10369,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -455, y: -448}
+  m_AnchoredPosition: {x: -455, y: -458}
   m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1313041203
@@ -11087,9 +11087,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 095bce91adda8654fab1ecf485a554ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  note: {fileID: 0}
-  longNote: {fileID: 0}
-  laneGroup: {fileID: 0}
+  note: {fileID: 4338996430500938900, guid: 752e1636a4bb0554b95d201c4de9ca29, type: 3}
+  longNote: {fileID: 4010496805334129063, guid: 2f730484347fa244faea76e9ddae58bd, type: 3}
+  laneGroup: {fileID: 463212792}
   idList: 
 --- !u!4 &1416512118
 Transform:
@@ -12799,7 +12799,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   changable: 0
   mode: 1
-  changedMode_Type: 0
+  changedMode_Type: 2
   changedMode_Hold: 0
 --- !u!114 &1601448573
 MonoBehaviour:
@@ -13000,15 +13000,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1770212c7efe04f4ea4ebdaddecbe50f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playableDirector: {fileID: 0}
-  canvas: {fileID: 0}
-  laneGroup: {fileID: 0}
-  judgeCircle: {fileID: 0}
-  Squares: []
-  flashSquare: {fileID: 0}
-  square_Appear: {fileID: 0}
-  square_Parge: {fileID: 0}
-  squareGroup: {fileID: 0}
+  playableDirector: {fileID: 2114470375}
+  canvas: {fileID: 775580189}
+  laneGroup: {fileID: 463212793}
+  judgeCircle: {fileID: 1459944512}
+  Squares:
+  - {fileID: 806331636}
+  - {fileID: 1432084151}
+  - {fileID: 1194514353}
+  - {fileID: 1486729971}
+  - {fileID: 33331641}
+  flashSquare: {fileID: 1806645898}
+  square_Appear: {fileID: 6079430773138912960, guid: afead0e0ea056444fab88090c0ad4197, type: 3}
+  square_Parge: {fileID: 7603049510315200685, guid: 41b2e6dcc5b0936469a84742dafb7d5d, type: 3}
+  squareGroup: {fileID: 2083637113}
   testMode_Type: 0
   testMode_Hold: 0
   test: 0
@@ -16052,7 +16057,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -25, y: -12}
+  m_AnchoredPosition: {x: -25, y: -54}
   m_SizeDelta: {x: 270, y: 110}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2104911853
