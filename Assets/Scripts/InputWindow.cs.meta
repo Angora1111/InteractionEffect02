@@ -3,7 +3,10 @@ guid: f7fa156066213da42bbeb4fd87c1d09f
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - modeButton: {instanceID: 0}
+  - backWindow: {instanceID: 0}
+  - inputFieldObj: {fileID: 8922125351862732748, guid: 87622b0c13b222c46a3e489188ad0840, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

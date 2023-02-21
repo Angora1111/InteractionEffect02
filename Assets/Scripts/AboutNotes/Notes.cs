@@ -165,18 +165,21 @@ public class Notes : MonoBehaviour
         if (distance < creteria * 3 / 8)
         {
             // PERFECT
+            gm.ShowJudge(EnumData.Judgement.PERFECT);
             JudgeDirection();
             return EnumData.Judgement.PERFECT;
         }
         else if (distance < creteria * 6 / 8)
         {
             // GOOD
+            gm.ShowJudge(EnumData.Judgement.GOOD);
             JudgeDirection();
             return EnumData.Judgement.GOOD;
         }
         else
         {
             // MISS
+            gm.ShowJudge(EnumData.Judgement.MISS);
             JudgeDirection(false);
             return EnumData.Judgement.MISS;
         }
