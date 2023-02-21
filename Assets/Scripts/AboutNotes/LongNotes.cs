@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class LongNotes : Notes
 {
+    //private const float LTOG_LONGNOTES = 14.9f; // ローカル座標をノーツにおけるグローバル座標に変換するための値
+
     [SerializeField] Transform endObj;
     [SerializeField] Transform passObj;
     private bool isHolding = false; // 保持中かどうか
