@@ -262,6 +262,9 @@ public class Notes : MonoBehaviour
         {
             laneObj = laneGroup.GetChild(lane);
             judgeBarCircle = laneObj.GetChild(2).transform;
+
+            transform.SetParent(laneGroup.transform.GetChild(lane).transform);
+            transform.localPosition = new Vector3(NotesGenerator.StartPos, 0, 0);
         }
         else { Debug.Log($"ylane:{lane}z‘Î‰‚·‚éƒŒ[ƒ“‚ª‘¶İ‚µ‚Ü‚¹‚ñ"); }
     }

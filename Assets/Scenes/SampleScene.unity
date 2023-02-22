@@ -6309,7 +6309,7 @@ RectTransform:
   - {fileID: 616190801}
   - {fileID: 229329242}
   m_Father: {fileID: 0}
-  m_RootOrder: 15
+  m_RootOrder: 16
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -8528,7 +8528,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 16
+  m_RootOrder: 17
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &990990641
 GameObject:
@@ -8959,6 +8959,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1093249716}
   m_CullTransparentMesh: 1
+--- !u!1 &1100408706
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1100408707}
+  m_Layer: 0
+  m_Name: NotesGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1100408707
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1100408706}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 15
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1128758803
 GameObject:
   m_ObjectHideFlags: 0
@@ -11166,7 +11197,7 @@ MonoBehaviour:
   note: {fileID: 4338996430500938900, guid: 752e1636a4bb0554b95d201c4de9ca29, type: 3}
   longNote: {fileID: 4010496805334129063, guid: 2f730484347fa244faea76e9ddae58bd, type: 3}
   laneGroup: {fileID: 463212792}
-  idList: 
+  notesGroup: {fileID: 1100408707}
 --- !u!4 &1416512118
 Transform:
   m_ObjectHideFlags: 0

@@ -6,13 +6,14 @@ using UnityEngine;
 public class NotesGenerator : MonoBehaviour
 {
     private const int MAX_LANE_NUM = 10;
+    private readonly Vector3 poolPos = new Vector3(-1000, -1000, 0);
     //変数
     [SerializeField] TypeNotes note;
     [SerializeField] LongNotes longNote;
     [SerializeField] GameObject laneGroup;
+    [SerializeField] Transform notesGroup;
     public static float StartPos = 70f;
     private int generateCount = 0;
-    private float speed = 30f;
     private Stack<int>[] longIds;
 
     private string dataPath;        // 譜面データのファイルパスのうち、固定の部分
@@ -64,11 +65,11 @@ public class NotesGenerator : MonoBehaviour
         // テスト用
         if (Input.GetKeyDown(KeyCode.J))
         {
-            GenerateTypeNote(0, 0);
+            GenerateTypeNote(0, 0, 2);
         }
         else if (Input.GetKeyDown(KeyCode.F))
         {
-            GenerateLongNote(0, 10, 0);
+            GenerateLongNote(0, 10, 0, 2);
         }
         else if (Input.GetKeyDown(KeyCode.D))
         {
@@ -77,24 +78,24 @@ public class NotesGenerator : MonoBehaviour
     }
 
     // ノーマルノーツ
-    public void GenerateTypeNote(float argStartTime, int argLane)
+    public void GenerateTypeNote(float argStartTime, int argLane, float argSpeed)
     {
         var _note = Instantiate(note.gameObject, transform);
-        _note.transform.SetParent(laneGroup.transform.GetChild(0).transform);
-        _note.transform.localPosition = new Vector3(StartPos, 0, 0);
-        _note.GetComponent<Notes>().SetValues(argStartTime, -1, argLane, generateCount, speed);
+        _note.transform.SetParent(notesGroup);
+        _note.transform.localPosition = poolPos;
+        _note.GetComponent<Notes>().SetValues(argStartTime, -1, argLane, generateCount, argSpeed * 15f);
         _note.GetComponent<Notes>().SetLayer(generateCount);
 
         generateCount++;
     }
 
     // ロングノーツ
-    public void GenerateLongNote(float argStartTime, float argEndTime, int argLane)
+    public void GenerateLongNote(float argStartTime, float argEndTime, int argLane, float argSpeed)
     {
         var _note = Instantiate(longNote, transform);
-        _note.transform.SetParent(laneGroup.transform.GetChild(0).transform);
-        _note.transform.localPosition = new Vector3(StartPos, 0, 0);
-        _note.GetComponent<Notes>().SetValues(argStartTime, argEndTime, argLane, generateCount, speed);
+        _note.transform.SetParent(notesGroup);
+        _note.transform.localPosition = poolPos;
+        _note.GetComponent<Notes>().SetValues(argStartTime, argEndTime, argLane, generateCount, argSpeed * 15f);
         _note.GetComponent<Notes>().SetLayer(generateCount);
         longIds[0].Push(generateCount);
 
@@ -131,6 +132,22 @@ public class NotesGenerator : MonoBehaviour
         notesMap = LoadNotesMapData(dataPath + notesMapPath);
 
         // 読み込んだデータに従ってノーツを生成する
+        for(int i = 0; i < notesMap.notesData.Count; i++)
+        {
+            var nd = notesMap.notesData[i];
+            switch (nd.type)
+            {
+                case 1:
+                    GenerateTypeNote(nd.startTime, 0, nd.speed);
+                    break;
+                case 2:
+                    GenerateLongNote(nd.startTime, nd.endTime, 0, nd.speed);
+                    break;
+                default:
+                    Debug.Log($"【{i}】ノーツ以外のものがありました");
+                    break;
+            }
+        }
     }
 
     /// <summary>
