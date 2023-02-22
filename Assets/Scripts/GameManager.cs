@@ -48,6 +48,8 @@ public class GameManager : MonoBehaviour
 
     // --- 変数 ---
     [SerializeField] PlayableDirector playableDirector; // タイムライン
+    [SerializeField] NotesGenerator notesGenerator;     // ノーツ生成オブジェクト
+    [SerializeField] ChangeTimeLine changeTimeLine;     // 楽曲をセットするためのクラス
     [SerializeField] GameObject canvas;     // UI
     [SerializeField] Transform laneGroup;   // レーン全て
     [SerializeField] Transform judgeCircle; // 判定枠だけ
@@ -96,6 +98,7 @@ public class GameManager : MonoBehaviour
         pjudgeCirclePos = judgeCircle.position;
         pjudgeCircleScale = judgeCircle.localScale;
         planeGroupRot = laneGroup.eulerAngles;
+        changeTimeLine.SetSong();
     }
 
     void Update()
@@ -111,6 +114,7 @@ public class GameManager : MonoBehaviour
             canStart = false;
             playableDirector.Stop();
             playableDirector.Play();
+            notesGenerator.StartGame();
         }
 
         if (canStart)
@@ -198,7 +202,6 @@ public class GameManager : MonoBehaviour
                     RestartAction(effectMode_Type, true, false, false);
 
                     Vector3 moveVec = Vector3.zero;
-                    Debug.Log(modePreviews[0]);
                     switch (modePreviews[0])
                     {
                         case 0: moveVec = new Vector3(1.5f, 0, 0); break;           //平行
@@ -518,7 +521,7 @@ public class GameManager : MonoBehaviour
     private void SquarePargeInit(Color color)
     {
         GameObject square = Instantiate(square_Parge.gameObject, squareGroup.transform);
-        square.GetComponent<AppearSquare>().SetColor(color, orderNum_Type + orderNum_Hold);
+        square.GetComponent<PargeSquare>().SetColor(color, orderNum_Type + orderNum_Hold);
         pargingSquare = square;
     }
 
@@ -596,7 +599,7 @@ public class GameManager : MonoBehaviour
     {
         if (withLocal)
         {
-            Debug.Log($"{gap.x}, {gap.y} =>");
+            //Debug.Log($"{gap.x}, {gap.y} =>");
             float laneRot = laneGroup.transform.eulerAngles.z;
             float gapLength = gap.magnitude;
             float gapAngle = default;
@@ -616,7 +619,7 @@ public class GameManager : MonoBehaviour
                 }
             }
             gap = new Vector3(gapLength * Mathf.Cos((Mathf.PI * laneRot / 180) + gapAngle), gapLength * Mathf.Sin((Mathf.PI * laneRot / 180) + gapAngle), 0);
-            Debug.Log($"{gap.x}, {gap.y}");
+            //Debug.Log($"{gap.x}, {gap.y}");
         }
         Vector3 pos = laneGroup.transform.position;
         float exe_times = 1f;

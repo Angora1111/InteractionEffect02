@@ -125,7 +125,6 @@ public class Notes : MonoBehaviour
         // 最もレーンにおいて下にあるノーツを取り出す
         foreach (var _hit2D in argHit2Ds)
         {
-            Debug.Log("衝突を検知しました");
             if (hit2D != default)
             {
                 if (_hit2D.collider.transform.localPosition.x < hit2D.collider.transform.localPosition.x)
@@ -139,7 +138,6 @@ public class Notes : MonoBehaviour
         if (hit2D == default) { return false; } // 何も取り出されなければfalse
         if (hit2D.collider.gameObject.TryGetComponent<Notes>(out var noteData))
         {
-            Debug.Log("同一ノーツかチェックしました");
             return noteData.GetLane() == lane && noteData.GetId() == id;
         }
         else { return false; }
@@ -165,7 +163,6 @@ public class Notes : MonoBehaviour
 
             // ノーツと判定枠の距離を格納
             float distance = Mathf.Abs(hit2D.transform.localPosition.x - judgeBarCircle.localPosition.x);
-            Debug.Log(distance);
 
             // 距離から判定処理を行う
             return JudgementByDistance(distance, radius);

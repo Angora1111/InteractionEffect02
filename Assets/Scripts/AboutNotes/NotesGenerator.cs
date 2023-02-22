@@ -129,7 +129,8 @@ public class NotesGenerator : MonoBehaviour
     public void StartGame()
     {
         // jsonファイルを読み込む
-        notesMap = LoadNotesMapData(dataPath + notesMapPath);
+        string fileName = dataPath + notesMapPath;
+        notesMap = LoadNotesMapData(fileName);
 
         // 読み込んだデータに従ってノーツを生成する
         for(int i = 0; i < notesMap.notesData.Count; i++)
@@ -169,7 +170,7 @@ public class NotesGenerator : MonoBehaviour
         }
     }
 
-    public NotesMapData LoadNotesMapData(string argDataPath)
+    private NotesMapData LoadNotesMapData(string argDataPath)
     {
         using (StreamReader reader = new StreamReader(argDataPath))
         {

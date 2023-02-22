@@ -349,7 +349,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -7
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.65882355, g: 0, b: 0, a: 1}
   m_FlipX: 0
@@ -4706,6 +4706,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fcb4095acf5d5344b8afc35b74284284, type: 2}
   - {fileID: 11400000, guid: 17ad816af2e34df44a9d9f527462b0df, type: 2}
   dd: {fileID: 529968409}
+  ng: {fileID: 1416512117}
 --- !u!114 &529968409
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6560,7 +6561,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -10
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.015686275, g: 0.015686275, b: 0.44313726, a: 1}
   m_FlipX: 0
@@ -9589,7 +9590,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -8
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.043137256, g: 0.65882355, b: 0, a: 1}
   m_FlipX: 0
@@ -10671,7 +10672,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 
+  m_Text: 1.5
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -11320,7 +11321,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -9
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.043137256, g: 0.65882355, b: 0, a: 1}
   m_FlipX: 0
@@ -12014,7 +12015,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -6
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.08627451, g: 0.08627451, b: 0.08627451, a: 1}
   m_FlipX: 0
@@ -13108,6 +13109,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playableDirector: {fileID: 2114470375}
+  notesGenerator: {fileID: 1416512117}
+  changeTimeLine: {fileID: 529968408}
   canvas: {fileID: 775580189}
   laneGroup: {fileID: 463212793}
   judgeCircle: {fileID: 1459944512}
@@ -14281,7 +14284,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 809b0cbc0bcb69c45be1b3b51461f4b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  colorPreview: {fileID: 0}
+  colorPreview: {fileID: 225774666}
 --- !u!212 &1806645900
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -14322,7 +14325,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -10
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.003921569, g: 0.8, b: 0, a: 1}
   m_FlipX: 0
@@ -15692,7 +15695,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 
+  m_Text: 1.5
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
