@@ -43,6 +43,7 @@ public class VariousPreview : MonoBehaviour
                 //GameManagerÇ…ê›íËÇ∑ÇÈ
                 gm.SetColors(transform);
                 gm.SetBools(transform);
+                gm.SetFloatFromInputField(transform);
             }
         }
     }

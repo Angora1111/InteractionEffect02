@@ -28,7 +28,7 @@ public class FlashSquare : MonoBehaviour
     {
         waitTime = 0.15f * gm.GetFixedActionSpeed();
         float exe_times = gm.SetExeTimes(waitTime, 10f);
-        Debug.Log($"実行回数：{exe_times}");
+        //Debug.Log($"実行回数：{exe_times}");
         for (int i = 1; i <= exe_times; i++)
         {
             sr.color = new Color(originalColor.r, originalColor.g, originalColor.b, (float)i / exe_times);

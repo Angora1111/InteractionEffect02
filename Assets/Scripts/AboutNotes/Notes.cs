@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Notes : MonoBehaviour
 {
-    const int START_SORTINGORDER = 30000;           // 最前面のレイヤーの値
+    protected const int START_SORTINGORDER = 30000; // 最前面のレイヤーの値
 
     protected const float LANE_BOTTUM = -10f;       // ノーツが消滅する位置
     protected const float JUDGE_POS = 0f;           // 判定バーの位置
@@ -13,7 +13,10 @@ public class Notes : MonoBehaviour
 
     protected GameManager gm;                       // GameManagerクラス
     private Transform laneObj;                      // 対応するレーンのtransform
-    private Transform judgeBarObj;                  // 対応するレーンの判定バーのtransform
+    private Transform judgeBarCircle;               // 対応するレーンの判定枠のtransform
+    private float totalTime = 0;                    // 生成からの合計時間
+    protected float startTime = -1;                 // ノーツが動き出すタイミング
+    protected float endTime = -1;                   // あれば、終点ノーツが動き出すタイミング
     protected int lane = -1;                        // レーン番号
     protected int kindOfDirection = -1;             // 演出の識別番号
     protected int id = -1;                          // ID番号
@@ -26,8 +29,15 @@ public class Notes : MonoBehaviour
 
     private void Update()
     {
-        if (id != -1)
+        totalTime += Time.deltaTime;
+
+        if (startTime != -1 && startTime <= totalTime)
         {
+            if(laneObj == null)
+            {
+                SetLaneObj();
+            }
+
             // ノーツの判定処理 ------------------------
             // 対応するキーを押したとき
             if (Input.GetKeyDown(KeyWithLane()))
@@ -49,7 +59,7 @@ public class Notes : MonoBehaviour
 
             // ノーツの移動処理 ------------------------
             // ノーツが消滅する位置より上だったら
-            if (transform.localPosition.y > LANE_BOTTUM)
+            if (transform.localPosition.x > LANE_BOTTUM)
             {
                 MoveOnLane();
             }
@@ -60,6 +70,11 @@ public class Notes : MonoBehaviour
             }
 
             EndOfUpdateProcess();
+        }
+
+        if(endTime != -1 && endTime <= totalTime)
+        {
+            EndTimeProcess();
         }
     }
 
@@ -86,6 +101,7 @@ public class Notes : MonoBehaviour
     protected void MissByNeglect()
     {
         Debug.Log($"【lane:{lane}, id:{id}】ノーツを取り逃しました...");
+        gm.ShowJudge(EnumData.Judgement.MISS);
         Disappear();
     }
 
@@ -111,7 +127,7 @@ public class Notes : MonoBehaviour
         {
             if (hit2D != default)
             {
-                if (_hit2D.collider.transform.localPosition.y < hit2D.collider.transform.localPosition.y)
+                if (_hit2D.collider.transform.localPosition.x < hit2D.collider.transform.localPosition.x)
                 {
                     hit2D = _hit2D;
                 }
@@ -137,7 +153,7 @@ public class Notes : MonoBehaviour
         if (StrikeNoteManager.GetIsStruck(lane)) { return EnumData.Judgement.NONE; }
 
         float radius = JUDEGE_RADIUS;
-        RaycastHit2D[] hit2Ds = Physics2D.CapsuleCastAll(judgeBarObj.position, new Vector2(radius, 1f), CapsuleDirection2D.Horizontal, laneObj.localEulerAngles.z, Vector2.zero);
+        RaycastHit2D[] hit2Ds = Physics2D.CapsuleCastAll(judgeBarCircle.position, new Vector2(radius * 2, 1f), CapsuleDirection2D.Horizontal, laneObj.localEulerAngles.z, Vector2.zero);
         RaycastHit2D hit2D = default;
         // 最もレーンにおいて下にあるノーツが自分自身であるかどうかを確認する
         if (IsMatchClosestNote(ref hit2Ds, ref hit2D))
@@ -145,13 +161,16 @@ public class Notes : MonoBehaviour
             // 該当レーンのフラグを true にする
             StrikeNoteManager.SetIsStruck(lane);
 
-            // ノーツと判定バーの距離を格納
-            float distance = Mathf.Abs(hit2D.transform.localPosition.y - judgeBarObj.localPosition.y) * LOCAL_TO_GLOBAL * 2;
+            // ノーツと判定枠の距離を格納
+            float distance = Mathf.Abs(hit2D.transform.localPosition.x - judgeBarCircle.localPosition.x);
 
             // 距離から判定処理を行う
             return JudgementByDistance(distance, radius);
         }
-        else { return EnumData.Judgement.NONE; }
+        else 
+        {
+            return EnumData.Judgement.NONE; 
+        }
     }
 
     /// <summary>
@@ -162,7 +181,7 @@ public class Notes : MonoBehaviour
     /// <returns>判定結果</returns>
     protected EnumData.Judgement JudgementByDistance(float distance, float creteria)
     {
-        if (distance < creteria * 3 / 8)
+        if (distance < creteria * 2 / 8)
         {
             // PERFECT
             gm.ShowJudge(EnumData.Judgement.PERFECT);
@@ -211,19 +230,40 @@ public class Notes : MonoBehaviour
     protected virtual void EndOfUpdateProcess() { }
 
     /// <summary>
+    /// endTimeが設定されていて、かつその時間になったときに実行される処理（派生クラスを優先）
+    /// </summary>
+    protected virtual void EndTimeProcess() { }
+
+    /// <summary>
     /// レーン番号とIDを設定する
     /// </summary>
     /// <param name="argLane">設定後のレーン番号</param>
     /// <param name="argId">設定後のID</param>
-    public void SetValues(int argLane, int argId, float argSpeed, int argKindOfDirection = -1)
+    public void SetValues(float argStartTime, float argEndTime, int argLane, int argId, float argSpeed, int argKindOfDirection = -1)
     {
+        startTime = argStartTime;
+        endTime = argEndTime;
         lane = argLane;
         id = argId;
         kindOfDirection = argKindOfDirection;
         SetSpeed(argSpeed);
-        // レーンと判定バーのtarnsformをセットする
-        laneObj = GameObject.Find("LaneGroup").transform.GetChild(lane).transform;
-        judgeBarObj = laneObj.GetChild(2).transform;
+    }
+
+    /// <summary>
+    /// レーンと判定バーのtarnsformをセットする
+    /// </summary>
+    private void SetLaneObj()
+    {
+        var laneGroup = GameObject.Find("LaneGroup").transform;
+        if (laneGroup.childCount > lane)
+        {
+            laneObj = laneGroup.GetChild(lane);
+            judgeBarCircle = laneObj.GetChild(2).transform;
+
+            transform.SetParent(laneGroup.transform.GetChild(lane).transform);
+            transform.localPosition = new Vector3(NotesGenerator.StartPos, 0, 0);
+        }
+        else { Debug.Log($"【lane:{lane}】対応するレーンが存在しません"); }
     }
 
     /// <summary>
@@ -236,19 +276,19 @@ public class Notes : MonoBehaviour
     }
 
     /// <summary>
-    /// レイヤーをノーツ内で最背面にする
+    /// レイヤーをノーツ内で最背面にする（派生クラスを優先）
     /// </summary>
     /// <param name="num"></param>
-    public void SetLayer(int num)
+    public virtual void SetLayer(int num)
     {
         var sr = GetComponent<SpriteRenderer>();
-        sr.sortingOrder = START_SORTINGORDER - num * 10 - 3;
+        sr.sortingOrder = START_SORTINGORDER - num * 11 - 3;
         int childNum = 0;
         foreach (Transform child in transform)
         {
             childNum++;
             var csr = child.gameObject.GetComponent<SpriteRenderer>();
-            csr.sortingOrder = START_SORTINGORDER - num * 10 - (3 - childNum);
+            csr.sortingOrder = START_SORTINGORDER - num * 11 - (3 - childNum);
         }
     }
 
