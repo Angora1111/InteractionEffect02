@@ -64,11 +64,11 @@ public class NotesGenerator : MonoBehaviour
         // テスト用
         if (Input.GetKeyDown(KeyCode.J))
         {
-            GenerateTypeNote();
+            GenerateTypeNote(0, 0);
         }
         else if (Input.GetKeyDown(KeyCode.F))
         {
-            GenerateLongNote_S(0);
+            GenerateLongNote(0, 10, 0);
         }
         else if (Input.GetKeyDown(KeyCode.D))
         {
@@ -77,31 +77,31 @@ public class NotesGenerator : MonoBehaviour
     }
 
     // ノーマルノーツ
-    public void GenerateTypeNote()
+    public void GenerateTypeNote(float argStartTime, int argLane)
     {
         var _note = Instantiate(note.gameObject, transform);
         _note.transform.SetParent(laneGroup.transform.GetChild(0).transform);
         _note.transform.localPosition = new Vector3(StartPos, 0, 0);
-        _note.GetComponent<Notes>().SetValues(0, generateCount, speed);
+        _note.GetComponent<Notes>().SetValues(argStartTime, -1, argLane, generateCount, speed);
         _note.GetComponent<Notes>().SetLayer(generateCount);
 
         generateCount++;
     }
 
-    // ロングノーツ始点
-    public void GenerateLongNote_S(int laneNum)
+    // ロングノーツ
+    public void GenerateLongNote(float argStartTime, float argEndTime, int argLane)
     {
         var _note = Instantiate(longNote, transform);
         _note.transform.SetParent(laneGroup.transform.GetChild(0).transform);
         _note.transform.localPosition = new Vector3(StartPos, 0, 0);
-        _note.GetComponent<Notes>().SetValues(laneNum, generateCount, speed);
+        _note.GetComponent<Notes>().SetValues(argStartTime, argEndTime, argLane, generateCount, speed);
         _note.GetComponent<Notes>().SetLayer(generateCount);
         longIds[0].Push(generateCount);
 
         generateCount++;
     }
 
-    // ロングノーツ終点
+    // 強制的にロングノーツ終点を出現させる
     public void GenerateLongNote_E(int laneNum)
     {
         // 最後に保存したIDを取り出す

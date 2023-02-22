@@ -14,6 +14,9 @@ public class Notes : MonoBehaviour
     protected GameManager gm;                       // GameManagerクラス
     private Transform laneObj;                      // 対応するレーンのtransform
     private Transform judgeBarCircle;               // 対応するレーンの判定枠のtransform
+    private float totalTime = 0;                    // 生成からの合計時間
+    protected float startTime = -1;                 // ノーツが動き出すタイミング
+    protected float endTime = -1;                   // あれば、終点ノーツが動き出すタイミング
     protected int lane = -1;                        // レーン番号
     protected int kindOfDirection = -1;             // 演出の識別番号
     protected int id = -1;                          // ID番号
@@ -26,8 +29,15 @@ public class Notes : MonoBehaviour
 
     private void Update()
     {
-        if (id != -1)
+        totalTime += Time.deltaTime;
+
+        if (startTime != -1 && startTime <= totalTime)
         {
+            if(laneObj == null)
+            {
+                SetLaneObj();
+            }
+
             // ノーツの判定処理 ------------------------
             // 対応するキーを押したとき
             if (Input.GetKeyDown(KeyWithLane()))
@@ -60,6 +70,11 @@ public class Notes : MonoBehaviour
             }
 
             EndOfUpdateProcess();
+        }
+
+        if(endTime != -1 && endTime <= totalTime)
+        {
+            EndTimeProcess();
         }
     }
 
@@ -218,19 +233,37 @@ public class Notes : MonoBehaviour
     protected virtual void EndOfUpdateProcess() { }
 
     /// <summary>
+    /// endTimeが設定されていて、かつその時間になったときに実行される処理（派生クラスを優先）
+    /// </summary>
+    protected virtual void EndTimeProcess() { }
+
+    /// <summary>
     /// レーン番号とIDを設定する
     /// </summary>
     /// <param name="argLane">設定後のレーン番号</param>
     /// <param name="argId">設定後のID</param>
-    public void SetValues(int argLane, int argId, float argSpeed, int argKindOfDirection = -1)
+    public void SetValues(float argStartTime, float argEndTime, int argLane, int argId, float argSpeed, int argKindOfDirection = -1)
     {
+        startTime = argStartTime;
+        endTime = argEndTime;
         lane = argLane;
         id = argId;
         kindOfDirection = argKindOfDirection;
         SetSpeed(argSpeed);
-        // レーンと判定バーのtarnsformをセットする
-        laneObj = GameObject.Find("LaneGroup").transform.GetChild(lane);
-        judgeBarCircle = laneObj.GetChild(2).transform;
+    }
+
+    /// <summary>
+    /// レーンと判定バーのtarnsformをセットする
+    /// </summary>
+    private void SetLaneObj()
+    {
+        var laneGroup = GameObject.Find("LaneGroup").transform;
+        if (laneGroup.childCount > lane)
+        {
+            laneObj = laneGroup.GetChild(lane);
+            judgeBarCircle = laneObj.GetChild(2).transform;
+        }
+        else { Debug.Log($"【lane:{lane}】対応するレーンが存在しません"); }
     }
 
     /// <summary>

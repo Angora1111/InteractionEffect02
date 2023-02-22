@@ -112,4 +112,9 @@ public class LongNotes : Notes
     {
         isEndObj = true;
     }
+
+    protected override void EndTimeProcess()
+    {
+        SetOnIsEndObj();
+    }
 }
