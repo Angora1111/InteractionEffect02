@@ -4,21 +4,23 @@ using UnityEngine;
 
 public class NotesGenerator : MonoBehaviour
 {
+    private const int MAX_LANE_NUM = 10;
     //変数
     [SerializeField] TypeNotes note;
     [SerializeField] LongNotes longNote;
     [SerializeField] GameObject laneGroup;
     public static float StartPos = 70f;
     private int generateCount = 0;
-    private float speed = 1f;
+    private float speed = 30f;
     private Stack<int>[] longIds;
-
-    //リスト
-    public List<int> idList = new List<int>();
 
     private void Awake()
     {
-        idList.Add(-1);
+        longIds = new Stack<int>[MAX_LANE_NUM];
+        for(int i = 0; i < MAX_LANE_NUM; i++)
+        {
+            longIds[i] = new Stack<int>();
+        }
     }
 
     private void Update()
@@ -41,11 +43,11 @@ public class NotesGenerator : MonoBehaviour
     // ノーマルノーツ
     public void GenerateTypeNote()
     {
-        var _note = Instantiate(note, transform);
-        _note.transform.SetParent(laneGroup.transform);
+        var _note = Instantiate(note.gameObject, transform);
+        _note.transform.SetParent(laneGroup.transform.GetChild(0).transform);
         _note.transform.localPosition = new Vector3(StartPos, 0, 0);
-        _note.SetValues(0, generateCount, speed);
-        _note.SetLayer(generateCount);
+        _note.GetComponent<Notes>().SetValues(0, generateCount, speed);
+        _note.GetComponent<Notes>().SetLayer(generateCount);
 
         generateCount++;
     }
@@ -54,10 +56,10 @@ public class NotesGenerator : MonoBehaviour
     public void GenerateLongNote_S(int laneNum)
     {
         var _note = Instantiate(longNote, transform);
-        _note.transform.SetParent(laneGroup.transform);
+        _note.transform.SetParent(laneGroup.transform.GetChild(0).transform);
         _note.transform.localPosition = new Vector3(StartPos, 0, 0);
         _note.GetComponent<Notes>().SetValues(laneNum, generateCount, speed);
-        _note.SetLayer(generateCount);
+        _note.GetComponent<Notes>().SetLayer(generateCount);
         longIds[0].Push(generateCount);
 
         generateCount++;
@@ -68,7 +70,7 @@ public class NotesGenerator : MonoBehaviour
     {
         // 最後に保存したIDを取り出す
         int startId = longIds[laneNum].Pop();
-        foreach (Transform child in laneGroup.transform)
+        foreach (Transform child in laneGroup.transform.GetChild(0).transform)
         {
             // ロングノーツがあるかどうか確認する
             if (child.gameObject.TryGetComponent<LongNotes>(out var ln))

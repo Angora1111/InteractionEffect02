@@ -121,6 +121,9 @@ public class GameManager : MonoBehaviour
         {
             canvas.SetActive(false);
         }
+
+        // ”»’è˜g‚ÌF‚ğ–ß‚·
+        FadeOutJudgeColor();
     }
 
     #region •Ï‰»‚ÌÀs•”•ª
@@ -322,6 +325,26 @@ public class GameManager : MonoBehaviour
                 Debug.Log("MISS...");
                 judgeSr.color = color_Miss;
                 break;
+        }
+    }
+
+    /// <summary>
+    /// ”»’è˜g‚ÌF‚ğ­‚µ‚Ã‚ÂŒ³‚É–ß‚·
+    /// </summary>
+    private void FadeOutJudgeColor()
+    {
+        if (judgeSr.color != Color.white)
+        {
+            Color color = new Color(1f - judgeSr.color.r, 1f - judgeSr.color.g, 1f - judgeSr.color.b);
+            Color _color = new Color(color.r * 0.03f, color.g * 0.03f, color.b * 0.03f);
+            if (judgeSr.color.r > 0.9f && judgeSr.color.g > 0.9f && judgeSr.color.b > 0.9f)
+            {
+                judgeSr.color = Color.white;
+            }
+            else
+            {
+                judgeSr.color += _color;
+            }
         }
     }
     #endregion

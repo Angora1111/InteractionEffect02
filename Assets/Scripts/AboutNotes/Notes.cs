@@ -13,7 +13,7 @@ public class Notes : MonoBehaviour
 
     protected GameManager gm;                       // GameManagerクラス
     private Transform laneObj;                      // 対応するレーンのtransform
-    private Transform judgeBarObj;                  // 対応するレーンの判定バーのtransform
+    private Transform judgeBarCircle;               // 対応するレーンの判定枠のtransform
     protected int lane = -1;                        // レーン番号
     protected int kindOfDirection = -1;             // 演出の識別番号
     protected int id = -1;                          // ID番号
@@ -49,7 +49,7 @@ public class Notes : MonoBehaviour
 
             // ノーツの移動処理 ------------------------
             // ノーツが消滅する位置より上だったら
-            if (transform.localPosition.y > LANE_BOTTUM)
+            if (transform.localPosition.x > LANE_BOTTUM)
             {
                 MoveOnLane();
             }
@@ -86,6 +86,7 @@ public class Notes : MonoBehaviour
     protected void MissByNeglect()
     {
         Debug.Log($"【lane:{lane}, id:{id}】ノーツを取り逃しました...");
+        gm.ShowJudge(EnumData.Judgement.MISS);
         Disappear();
     }
 
@@ -109,9 +110,10 @@ public class Notes : MonoBehaviour
         // 最もレーンにおいて下にあるノーツを取り出す
         foreach (var _hit2D in argHit2Ds)
         {
+            Debug.Log("衝突を検知しました");
             if (hit2D != default)
             {
-                if (_hit2D.collider.transform.localPosition.y < hit2D.collider.transform.localPosition.y)
+                if (_hit2D.collider.transform.localPosition.x < hit2D.collider.transform.localPosition.x)
                 {
                     hit2D = _hit2D;
                 }
@@ -122,6 +124,7 @@ public class Notes : MonoBehaviour
         if (hit2D == default) { return false; } // 何も取り出されなければfalse
         if (hit2D.collider.gameObject.TryGetComponent<Notes>(out var noteData))
         {
+            Debug.Log("同一ノーツかチェックしました");
             return noteData.GetLane() == lane && noteData.GetId() == id;
         }
         else { return false; }
@@ -137,7 +140,7 @@ public class Notes : MonoBehaviour
         if (StrikeNoteManager.GetIsStruck(lane)) { return EnumData.Judgement.NONE; }
 
         float radius = JUDEGE_RADIUS;
-        RaycastHit2D[] hit2Ds = Physics2D.CapsuleCastAll(judgeBarObj.position, new Vector2(radius, 1f), CapsuleDirection2D.Horizontal, laneObj.localEulerAngles.z, Vector2.zero);
+        RaycastHit2D[] hit2Ds = Physics2D.CapsuleCastAll(judgeBarCircle.position, new Vector2(radius * 2, 1f), CapsuleDirection2D.Horizontal, laneObj.localEulerAngles.z, Vector2.zero);
         RaycastHit2D hit2D = default;
         // 最もレーンにおいて下にあるノーツが自分自身であるかどうかを確認する
         if (IsMatchClosestNote(ref hit2Ds, ref hit2D))
@@ -145,13 +148,17 @@ public class Notes : MonoBehaviour
             // 該当レーンのフラグを true にする
             StrikeNoteManager.SetIsStruck(lane);
 
-            // ノーツと判定バーの距離を格納
-            float distance = Mathf.Abs(hit2D.transform.localPosition.y - judgeBarObj.localPosition.y) * LOCAL_TO_GLOBAL * 2;
+            // ノーツと判定枠の距離を格納
+            float distance = Mathf.Abs(hit2D.transform.localPosition.x - judgeBarCircle.localPosition.x);
+            Debug.Log(distance);
 
             // 距離から判定処理を行う
             return JudgementByDistance(distance, radius);
         }
-        else { return EnumData.Judgement.NONE; }
+        else 
+        {
+            return EnumData.Judgement.NONE; 
+        }
     }
 
     /// <summary>
@@ -162,7 +169,7 @@ public class Notes : MonoBehaviour
     /// <returns>判定結果</returns>
     protected EnumData.Judgement JudgementByDistance(float distance, float creteria)
     {
-        if (distance < creteria * 3 / 8)
+        if (distance < creteria * 2 / 8)
         {
             // PERFECT
             gm.ShowJudge(EnumData.Judgement.PERFECT);
@@ -222,8 +229,8 @@ public class Notes : MonoBehaviour
         kindOfDirection = argKindOfDirection;
         SetSpeed(argSpeed);
         // レーンと判定バーのtarnsformをセットする
-        laneObj = GameObject.Find("LaneGroup").transform.GetChild(lane).transform;
-        judgeBarObj = laneObj.GetChild(2).transform;
+        laneObj = GameObject.Find("LaneGroup").transform.GetChild(lane);
+        judgeBarCircle = laneObj.GetChild(2).transform;
     }
 
     /// <summary>
