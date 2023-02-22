@@ -79,6 +79,32 @@ public class LongNotes : Notes
         gm.HoldAction(argIsAction);
     }
 
+    public override void SetLayer(int num)
+    {
+        // 始点ノーツ
+        var sr = GetComponent<SpriteRenderer>();
+        sr.sortingOrder = START_SORTINGORDER - num * 11 - 9;
+        int childNum = 0;
+        foreach (Transform child in transform)
+        {
+            childNum++;
+            var csr = child.gameObject.GetComponent<SpriteRenderer>();
+            csr.sortingOrder = START_SORTINGORDER - num * 11 - (9 - childNum);
+            if(childNum == 4) { break; }
+        }
+        // 終点ノーツ
+        transform.GetChild(4).GetComponent<SpriteRenderer>().sortingOrder = START_SORTINGORDER - num * 11 - 4;
+        childNum = 0;
+        foreach (Transform child in transform.GetChild(4))
+        {
+            childNum++;
+            var csr = child.gameObject.GetComponent<SpriteRenderer>();
+            csr.sortingOrder = START_SORTINGORDER - num * 11 - (4 - childNum);
+        }
+        // パス
+        transform.GetChild(5).GetComponent<SpriteRenderer>().sortingOrder = START_SORTINGORDER - num * 11 - 10;
+    }
+
     /// <summary>
     /// 終点オブジェクトが生成されているかどうかのフラグを true にする
     /// </summary>

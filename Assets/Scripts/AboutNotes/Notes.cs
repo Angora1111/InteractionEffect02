@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Notes : MonoBehaviour
 {
-    const int START_SORTINGORDER = 30000;           // 最前面のレイヤーの値
+    protected const int START_SORTINGORDER = 30000; // 最前面のレイヤーの値
 
     protected const float LANE_BOTTUM = -10f;       // ノーツが消滅する位置
     protected const float JUDGE_POS = 0f;           // 判定バーの位置
@@ -243,19 +243,19 @@ public class Notes : MonoBehaviour
     }
 
     /// <summary>
-    /// レイヤーをノーツ内で最背面にする
+    /// レイヤーをノーツ内で最背面にする（派生クラスを優先）
     /// </summary>
     /// <param name="num"></param>
-    public void SetLayer(int num)
+    public virtual void SetLayer(int num)
     {
         var sr = GetComponent<SpriteRenderer>();
-        sr.sortingOrder = START_SORTINGORDER - num * 10 - 3;
+        sr.sortingOrder = START_SORTINGORDER - num * 11 - 3;
         int childNum = 0;
         foreach (Transform child in transform)
         {
             childNum++;
             var csr = child.gameObject.GetComponent<SpriteRenderer>();
-            csr.sortingOrder = START_SORTINGORDER - num * 10 - (3 - childNum);
+            csr.sortingOrder = START_SORTINGORDER - num * 11 - (3 - childNum);
         }
     }
 
