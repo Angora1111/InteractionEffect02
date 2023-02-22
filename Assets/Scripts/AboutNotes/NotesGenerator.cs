@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public class NotesGenerator : MonoBehaviour
@@ -14,6 +15,39 @@ public class NotesGenerator : MonoBehaviour
     private float speed = 30f;
     private Stack<int>[] longIds;
 
+    private string dataPath;        // 譜面データのファイルパスのうち、固定の部分
+    private string notesMapPath;    // 譜面データのファイルパスのうち、変わる部分
+    private NotesMapData notesMap;  // 譜面データを格納するクラス
+
+    // 譜面データのクラス
+    [System.Serializable]
+    public class NotesMapData
+    {
+        public List<NoteData> notesData;
+
+        public NotesMapData()
+        {
+            notesData = new List<NoteData>();
+        }
+    }
+
+    [System.Serializable]
+    public class NoteData
+    {
+        public float startTime;
+        public float endTime;
+        public int type;
+        public float speed;
+
+        public NoteData(float startTime, float endTime, int type, float speed)
+        {
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.type = type;
+            this.speed = speed;
+        }
+    }
+
     private void Awake()
     {
         longIds = new Stack<int>[MAX_LANE_NUM];
@@ -21,6 +55,8 @@ public class NotesGenerator : MonoBehaviour
         {
             longIds[i] = new Stack<int>();
         }
+
+        dataPath = Application.dataPath + "/NotesMaps";
     }
 
     private void Update()
@@ -83,6 +119,47 @@ public class NotesGenerator : MonoBehaviour
                     return;
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// ゲームを開始する
+    /// </summary>
+    public void StartGame()
+    {
+        // jsonファイルを読み込む
+        notesMap = LoadNotesMapData(dataPath + notesMapPath);
+
+        // 読み込んだデータに従ってノーツを生成する
+    }
+
+    /// <summary>
+    /// 譜面データのパスを設定する
+    /// </summary>
+    /// <param name="argNum">譜面番号</param>
+    public void SetNotesMapPath(int argNum)
+    {
+        switch (argNum)
+        {
+            case 0:
+                notesMapPath = "/ienm01_IE_1.json";
+                break;
+            case 1:
+                notesMapPath = "/ienm01_IE_2.json";
+                break;
+            default:
+                break;
+        }
+    }
+
+    public NotesMapData LoadNotesMapData(string argDataPath)
+    {
+        using (StreamReader reader = new StreamReader(argDataPath))
+        {
+            string datastr = reader.ReadToEnd();
+            reader.Close();
+
+            return JsonUtility.FromJson<NotesMapData>(datastr);
         }
     }
 }
