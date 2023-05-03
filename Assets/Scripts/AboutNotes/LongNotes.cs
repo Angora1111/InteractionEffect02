@@ -37,7 +37,8 @@ public class LongNotes : Notes
         {
             // 始点と終点の距離から、判定処理を行う
             float rangeOfStartAndEnd = Mathf.Abs(passObj.localPosition.x * LTOG_LONGNOTES);
-            JudgementByDistance(rangeOfStartAndEnd, JUDEGE_RADIUS);
+            //JudgementByDistance(rangeOfStartAndEnd, CommonData.missDist);
+            JudgementByConstDistance(rangeOfStartAndEnd, CommonData.perfectDist, CommonData.missDist);
 
             Disappear();
         }
@@ -71,7 +72,7 @@ public class LongNotes : Notes
         passObj.localScale = new Vector3(rangeOfStartAndEnd, passObj.localScale.y, passObj.localScale.z);
 
         // 終点が指定の位置まで来たら MISS にする
-        if (endObj.localPosition.x < (LANE_BOTTUM - JUDGE_POS) / LTOG_LONGNOTES) { MissByNeglect(); }
+        if (endObj.localPosition.x < (-CommonData.neglectDist - JUDGE_POS) / LTOG_LONGNOTES) { MissByNeglect(); }
     }
 
     protected override void JudgeDirection(bool argIsAction = true)
