@@ -53,6 +53,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject canvas;     // UI
     [SerializeField] Transform laneGroup;   // レーン全て
     [SerializeField] Transform judgeCircle; // 判定枠だけ
+    [SerializeField] Transform[] judgeObjs; // それぞれのレーン全て
     private SpriteRenderer judgeSr;         // 判定枠のSpriteRenderer
     public static EffectModeType effectMode_Type = EffectModeType.NONE; // 演出の種類
     public static EffectModeHold effectMode_Hold = EffectModeHold.NONE;
@@ -831,8 +832,20 @@ public class GameManager : MonoBehaviour
     /// <returns></returns>
     IEnumerator EndAction()
     {
-        //演出のスピードに合わせて一定時間待つ
+        // 演出のスピードに合わせて一定時間待つ
         yield return new WaitForSeconds(0.5f * GetFixedActionSpeed());
+
+        // ノーツを全て削除する
+        for(int judgeObjCount = 0; judgeObjCount < judgeObjs.Length; judgeObjCount++)
+        {
+            foreach(Transform child in judgeObjs[judgeObjCount])
+            {
+                if(child.gameObject.TryGetComponent<Notes>(out var notes))
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+        }
 
         canStart = true;
     }

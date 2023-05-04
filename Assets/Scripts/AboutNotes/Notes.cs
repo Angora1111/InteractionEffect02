@@ -6,10 +6,8 @@ public class Notes : MonoBehaviour
 {
     protected const int START_SORTINGORDER = 30000; // 最前面のレイヤーの値
 
-    protected const float LANE_BOTTUM = -10f;       // ノーツが消滅する位置
     protected const float JUDGE_POS = 0f;           // 判定バーの位置
     protected const float LOCAL_TO_GLOBAL = 16f;    // レーン上のlocalな長さからglobalな長さに変換するための値
-    protected const float JUDEGE_RADIUS = 8f;       // 判定をする際の基準となる距離
 
     protected GameManager gm;                       // GameManagerクラス
     private Transform laneObj;                      // 対応するレーンのtransform
@@ -59,7 +57,7 @@ public class Notes : MonoBehaviour
 
             // ノーツの移動処理 ------------------------
             // ノーツが消滅する位置より上だったら
-            if (transform.localPosition.x > LANE_BOTTUM)
+            if (transform.localPosition.x > -CommonData.neglectDist)
             {
                 MoveOnLane();
             }
@@ -152,7 +150,7 @@ public class Notes : MonoBehaviour
         // 既に同一レーンで判定処理がなされていたら判定処理をしない
         if (StrikeNoteManager.GetIsStruck(lane)) { return EnumData.Judgement.NONE; }
 
-        float radius = JUDEGE_RADIUS;
+        float radius = CommonData.missDist;
         RaycastHit2D[] hit2Ds = Physics2D.CapsuleCastAll(judgeBarCircle.position, new Vector2(radius * 2, 1f), CapsuleDirection2D.Horizontal, laneObj.localEulerAngles.z, Vector2.zero);
         RaycastHit2D hit2D = default;
         // 最もレーンにおいて下にあるノーツが自分自身であるかどうかを確認する
@@ -165,7 +163,8 @@ public class Notes : MonoBehaviour
             float distance = Mathf.Abs(hit2D.transform.localPosition.x - judgeBarCircle.localPosition.x);
 
             // 距離から判定処理を行う
-            return JudgementByDistance(distance, radius);
+            //return JudgementByDistance(distance, radius);
+            return JudgementByConstDistance(distance, CommonData.perfectDist, CommonData.goodDist);
         }
         else 
         {
@@ -174,7 +173,7 @@ public class Notes : MonoBehaviour
     }
 
     /// <summary>
-    /// 距離と基準を渡して、判定を受け取る
+    /// 距離と基準を渡して、割合で判定を受け取る
     /// </summary>
     /// <param name="distance">判定対象の距離</param>
     /// <param name="creteria">判定基準の距離</param>
@@ -189,6 +188,38 @@ public class Notes : MonoBehaviour
             return EnumData.Judgement.PERFECT;
         }
         else if (distance < creteria * 6 / 8)
+        {
+            // GOOD
+            gm.ShowJudge(EnumData.Judgement.GOOD);
+            JudgeDirection();
+            return EnumData.Judgement.GOOD;
+        }
+        else
+        {
+            // MISS
+            gm.ShowJudge(EnumData.Judgement.MISS);
+            JudgeDirection(false);
+            return EnumData.Judgement.MISS;
+        }
+    }
+
+    /// <summary>
+    /// 距離と各判定の基準を渡して、判定を受け取る
+    /// </summary>
+    /// <param name="distance">判定対象の距離</param>
+    /// <param name="creteria_perfect">PERFECT基準の距離</param>
+    /// <param name="creteria_good">GOOD基準の距離</param>
+    /// <returns></returns>
+    protected EnumData.Judgement JudgementByConstDistance(float distance, float creteria_perfect, float creteria_good)
+    {
+        if (distance < creteria_perfect)
+        {
+            // PERFECT
+            gm.ShowJudge(EnumData.Judgement.PERFECT);
+            JudgeDirection();
+            return EnumData.Judgement.PERFECT;
+        }
+        else if (distance < creteria_good)
         {
             // GOOD
             gm.ShowJudge(EnumData.Judgement.GOOD);
