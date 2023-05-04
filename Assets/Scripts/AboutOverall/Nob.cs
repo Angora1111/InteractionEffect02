@@ -30,7 +30,7 @@ public class Nob : MonoBehaviour
     }
 
     // Žw’è”ÍˆÍ“à‚É”[‚ß‚é
-    public bool FixCursorPos()
+    public virtual bool FixCursorPos()
     {
         var min = minValue + MIN_INTERVAL_BETWEEN_VALUES;
         var max = maxValue - MIN_INTERVAL_BETWEEN_VALUES;
