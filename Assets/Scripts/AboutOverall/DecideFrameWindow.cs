@@ -129,7 +129,6 @@ public class DecideFrameWindow : MonoBehaviour
                 pValue_miss = value;
                 break;
         }
-        Debug.Log($"max:{max}, value:{value}");
     }
 
     // インプットフィールドの値をスライダーに反映する
@@ -272,6 +271,11 @@ public class DecideFrameWindow : MonoBehaviour
                         label_disappear.text = pValue_disappear.ToString();
                     }
                 }
+
+                // 同じ値にならないように補正する
+                nob_perfect.FixCursorPos();
+                nob_good.FixCursorPos();
+                nob_miss.FixCursorPos();
 
                 // 全体に影響するため、各判定の値を変更する
                 SliderIntoInputField(0);

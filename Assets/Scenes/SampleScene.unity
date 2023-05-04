@@ -16732,6 +16732,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minValue: 0
   maxValue: 750
+  orderFromEnd: 1
   minValueObj: {fileID: 1324335679}
   maxValueObj: {fileID: 0}
   label_disappear: {fileID: 1200917792}
@@ -17874,6 +17875,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minValue: 0
   maxValue: 750
+  orderFromEnd: 2
   minValueObj: {fileID: 1530113594}
   maxValueObj: {fileID: 1234281329}
   label_disappear: {fileID: 1200917792}
@@ -21039,6 +21041,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minValue: 0
   maxValue: 750
+  orderFromEnd: 3
   minValueObj: {fileID: 0}
   maxValueObj: {fileID: 1324335679}
   label_disappear: {fileID: 1200917792}

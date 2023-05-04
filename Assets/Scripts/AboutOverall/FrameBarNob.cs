@@ -7,6 +7,7 @@ public class FrameBarNob : Nob
 {
     private const float SLIDER_WIDTH = 750.0f;
 
+    [SerializeField] int orderFromEnd = 1;
     [SerializeField] RectTransform minValueObj;
     [SerializeField] RectTransform maxValueObj;
     [SerializeField] Text label_disappear;
@@ -32,7 +33,7 @@ public class FrameBarNob : Nob
         // Žw’è”ÍˆÍ“à‚É”[‚ß‚é
         var interval = SLIDER_WIDTH / int.Parse(label_disappear.text);
         var min = minValue + interval;
-        var max = maxValue - interval;
+        var max = Mathf.Min(maxValue - interval, SLIDER_WIDTH - interval * orderFromEnd);
         var px = rt.anchoredPosition.x;
         rt.anchoredPosition = new Vector2(Mathf.Min(Mathf.Max(rt.anchoredPosition.x, min), max), rt.anchoredPosition.y);
 
