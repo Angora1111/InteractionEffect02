@@ -8,7 +8,6 @@ public class DecideFrameWindow : MonoBehaviour
     private const float SLIDER_MAX = 750.0f;
     private const int DISAPPEAR_START = 20;
     private const int DISAPPEAR_MIN = 4;
-    private const float FPS = 60f;
     private const float NOTESPEED = 30.0f;
 
     // 各インプットフィールドの、直前の値
@@ -22,6 +21,8 @@ public class DecideFrameWindow : MonoBehaviour
     private int pValue_c_miss = 0;
     private int pValue_c_neglect = 0;
 
+    [Header("FPS")]
+    [SerializeField] float fps = 60f;
     [Header("ノブ")]
     [SerializeField] FrameBarNob nob_perfect;
     [SerializeField] FrameBarNob nob_good, nob_miss;
@@ -45,10 +46,10 @@ public class DecideFrameWindow : MonoBehaviour
     private void OnEnable()
     {
         // 全体の値に設定する
-        CommonData.perfectDist = pValue_c_perfect / FPS * NOTESPEED;
-        CommonData.goodDist = pValue_c_good / FPS * NOTESPEED;
-        CommonData.missDist = pValue_c_miss / FPS * NOTESPEED;
-        CommonData.neglectDist = pValue_c_neglect / FPS * NOTESPEED;
+        CommonData.perfectDist = pValue_c_perfect / fps * NOTESPEED;
+        CommonData.goodDist = pValue_c_good / fps * NOTESPEED;
+        CommonData.missDist = pValue_c_miss / fps * NOTESPEED;
+        CommonData.neglectDist = pValue_c_neglect / fps * NOTESPEED;
 
         // ガイドラインに反映する
         guideline.Draw();
@@ -72,10 +73,10 @@ public class DecideFrameWindow : MonoBehaviour
                            || pValue_c_neglect != ___value)
                         {
                             // 全体の値に設定する
-                            CommonData.perfectDist = value / FPS * NOTESPEED;
-                            CommonData.goodDist = _value / FPS * NOTESPEED;
-                            CommonData.missDist = __value / FPS * NOTESPEED;
-                            CommonData.neglectDist = ___value / FPS * NOTESPEED;
+                            CommonData.perfectDist = value / fps * NOTESPEED;
+                            CommonData.goodDist = _value / fps * NOTESPEED;
+                            CommonData.missDist = __value / fps * NOTESPEED;
+                            CommonData.neglectDist = ___value / fps * NOTESPEED;
 
                             // ガイドラインに反映する
                             guideline.Draw();
@@ -257,11 +258,11 @@ public class DecideFrameWindow : MonoBehaviour
                     if (pValue_disappear == -1)
                     {
                         // 値を記録
-                        pValue_disappear = DISAPPEAR_START;
+                        pValue_disappear = (int)(DISAPPEAR_START * fps / 60f);
 
                         // 初期値を設定する
-                        inputField_disappear.text = DISAPPEAR_START.ToString();
-                        label_disappear.text = DISAPPEAR_START.ToString();
+                        inputField_disappear.text = (DISAPPEAR_START * fps / 60f).ToString();
+                        label_disappear.text = (DISAPPEAR_START * fps / 60f).ToString();
                     }
                     // 以前に入力したことがあれば
                     else
