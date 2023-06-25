@@ -57,10 +57,10 @@ public class ModeButton : MonoBehaviour
         switch (mode)
         {
             case GameManager.ChangeMode.TYPE:
-                GameManager.effectMode_Type = changedMode_Type;
+                GameManager.effectMode_Type[GameManager.selectingEffectIndex] = changedMode_Type;
                 break;
             case GameManager.ChangeMode.HOLD:
-                GameManager.effectMode_Hold = changedMode_Hold;
+                GameManager.effectMode_Hold[GameManager.selectingEffectIndex] = changedMode_Hold;
                 break;
         }
     }
@@ -70,7 +70,7 @@ public class ModeButton : MonoBehaviour
         switch (mode)
         {
             case GameManager.ChangeMode.TYPE:
-                if (GameManager.effectMode_Type == changedMode_Type)
+                if (GameManager.effectMode_Type[GameManager.selectingEffectIndex] == changedMode_Type)
                 {
                     button.interactable = false;
                 }
@@ -80,7 +80,7 @@ public class ModeButton : MonoBehaviour
                 }
                 break;
             case GameManager.ChangeMode.HOLD:
-                if (GameManager.effectMode_Hold == changedMode_Hold)
+                if (GameManager.effectMode_Hold[GameManager.selectingEffectIndex] == changedMode_Hold)
                 {
                     button.interactable = false;
                 }

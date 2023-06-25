@@ -7,7 +7,8 @@ public class ChangeJudgementCriteria : MonoBehaviour
 {
     [SerializeField] Dropdown dd_creteria;
     [SerializeField] GameObject[] distObjs;
-    [SerializeField] GameObject[] frameObjs;
+    [SerializeField] GameObject[] frame60Objs;
+    [SerializeField] GameObject[] frame120Objs;
 
     // 判定の基準（距離 or フレーム）によって、表示を変更する
     public void ChangeCreteria()
@@ -23,16 +24,23 @@ public class ChangeJudgementCriteria : MonoBehaviour
                         obj.SetActive(true);
                     }
                 }
-                if (frameObjs != null)
+                if (frame60Objs != null)
                 {
-                    foreach (var obj in frameObjs)
+                    foreach (var obj in frame60Objs)
+                    {
+                        obj.SetActive(false);
+                    }
+                }
+                if (frame120Objs != null)
+                {
+                    foreach (var obj in frame120Objs)
                     {
                         obj.SetActive(false);
                     }
                 }
                 break;
 
-            // フレーム
+            // フレーム（60fps）
             case 1:
                 if (distObjs != null)
                 {
@@ -41,9 +49,41 @@ public class ChangeJudgementCriteria : MonoBehaviour
                         obj.SetActive(false);
                     }
                 }
-                if (frameObjs != null)
+                if (frame60Objs != null)
                 {
-                    foreach (var obj in frameObjs)
+                    foreach (var obj in frame60Objs)
+                    {
+                        obj.SetActive(true);
+                    }
+                }
+                if (frame120Objs != null)
+                {
+                    foreach (var obj in frame120Objs)
+                    {
+                        obj.SetActive(false);
+                    }
+                }
+                break;
+
+            // フレーム（120fps）
+            case 2:
+                if (distObjs != null)
+                {
+                    foreach (var obj in distObjs)
+                    {
+                        obj.SetActive(false);
+                    }
+                }
+                if (frame60Objs != null)
+                {
+                    foreach (var obj in frame60Objs)
+                    {
+                        obj.SetActive(false);
+                    }
+                }
+                if (frame120Objs != null)
+                {
+                    foreach (var obj in frame120Objs)
                     {
                         obj.SetActive(true);
                     }

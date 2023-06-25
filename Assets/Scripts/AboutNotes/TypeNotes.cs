@@ -12,8 +12,8 @@ public class TypeNotes : Notes
         }
     }
 
-    protected override void JudgeDirection(bool argIsAction = true)
+    protected override void JudgeDirection(EnumData.Judgement argJudgement)
     {
-        gm.TypeAction(argIsAction);
+        gm.TypeAction(argJudgement);
     }
 }

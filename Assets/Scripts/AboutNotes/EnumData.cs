@@ -13,5 +13,6 @@ public class EnumData
         PERFECT,
         GOOD,
         MISS,
+        MAX,
     }
 }

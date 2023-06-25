@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Playables;
+using Unity.VisualScripting;
+using System.Runtime.CompilerServices;
 
 public class GameManager : MonoBehaviour
 {
@@ -55,8 +57,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] Transform judgeCircle; // 判定枠だけ
     [SerializeField] Transform[] judgeObjs; // それぞれのレーン全て
     private SpriteRenderer judgeSr;         // 判定枠のSpriteRenderer
-    public static EffectModeType effectMode_Type = EffectModeType.NONE; // 演出の種類
-    public static EffectModeHold effectMode_Hold = EffectModeHold.NONE;
+    public static EffectModeType[] effectMode_Type = new EffectModeType[(int)EnumData.Judgement.MAX]; // 演出の種類
+    public static EffectModeHold[] effectMode_Hold = new EffectModeHold[(int)EnumData.Judgement.MAX];
+    private EffectModeType currentEffectMode_Type = EffectModeType.NONE;                              // 現在実行中の演出
+    private EffectModeHold currentEffectMode_Hold = EffectModeHold.NONE;
+    private static int _selectingEffectIndex = (int)EnumData.Judgement.PERFECT;                       // 演出を変更中のインデックス番号
+    public static int selectingEffectIndex { get { return _selectingEffectIndex; } }
     private int orderNum_Type = 0;  // 順番管理 
     private int orderNum_Hold = 0;
     [SerializeField] GameObject[] Squares;// 背景の格納用
@@ -80,7 +86,9 @@ public class GameManager : MonoBehaviour
     private Vector3 pjudgeCirclePos;                // 変化が実行される前の判定枠の位置
     private Vector3 pjudgeCircleScale;              // 変化が実行される前の判定枠の大きさ
     private Vector3 planeGroupRot;                  // 変化が実行される前の判定グループの角度
+    [SerializeField] GameObject[] hideObjAtSetMiss; // Missの演出を設定するときに非表示にするオブジェクト
 
+    [Header("テスト用 --------------------------------------------------------------------")]
     [SerializeField] EffectModeType testMode_Type = EffectModeType.NONE;
     [SerializeField] EffectModeHold testMode_Hold = EffectModeHold.NONE;
     [SerializeField] bool test = false; // テスト用か否か
@@ -100,6 +108,13 @@ public class GameManager : MonoBehaviour
         pjudgeCircleScale = judgeCircle.localScale;
         planeGroupRot = laneGroup.eulerAngles;
         changeTimeLine.SetSong();
+
+        int effectLength = (int)EnumData.Judgement.MAX;
+        for (int i = 0; i < effectLength; i++)
+        {
+            effectMode_Type[i] = EffectModeType.NONE;
+            effectMode_Hold[i] = EffectModeHold.NONE;
+        }
     }
 
     void Update()
@@ -108,8 +123,12 @@ public class GameManager : MonoBehaviour
         {
             if (test)//テスト用
             {
-                effectMode_Type = testMode_Type;
-                effectMode_Hold = testMode_Hold;
+                int effectLength = (int)EnumData.Judgement.MAX;
+                for(int i = 0; i < effectLength; i++)
+                {
+                    effectMode_Type[i] = testMode_Type;
+                    effectMode_Hold[i] = testMode_Hold;
+                }
             }
 
             canStart = false;
@@ -168,18 +187,21 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void TypeAction(bool isAction = true)
+    public void TypeAction(EnumData.Judgement argJudgement, bool isAction = true, bool notAddOrderNum = false)
     {
-        switch (effectMode_Type)
+        // 最新の演出を保存
+        currentEffectMode_Type = effectMode_Type[(int)argJudgement];
+
+        switch (currentEffectMode_Type)
         {
             case EffectModeType.NONE:
                 break;
             case EffectModeType.LANE_ROTATE_1:
                 if (isAction)
                 {
-                    RestartAction(effectMode_Type, false, false, true);
+                    RestartAction(currentEffectMode_Type, false, false, true);
 
-                    savedTypeActions[(int)effectMode_Type] = StartCoroutine(RotateJudgeCircleGap(90, 0.3f));
+                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(90, 0.3f));
 
                     //「orderNum」で一部変化させることが可能
                 }
@@ -187,9 +209,9 @@ public class GameManager : MonoBehaviour
             case EffectModeType.LANE_SLIME_1:
                 if (isAction)
                 {
-                    RestartAction(effectMode_Type, false, true, false);
+                    RestartAction(currentEffectMode_Type, false, true, false);
 
-                    savedTypeActions[(int)effectMode_Type] = StartCoroutine(SlimeCircle(0.09f, 0.09f, 20, 16));
+                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(SlimeCircle(0.09f, 0.09f, 20, 16));
 
                     //「orderNum」で一部変化させることが可能
                 }
@@ -200,7 +222,7 @@ public class GameManager : MonoBehaviour
                     float customX = inputFieldPreviews_type[0];
                     float customY = inputFieldPreviews_type[1];
 
-                    RestartAction(effectMode_Type, true, false, false);
+                    RestartAction(currentEffectMode_Type, true, false, false);
 
                     Vector3 moveVec = Vector3.zero;
                     switch (modePreviews[0])
@@ -210,7 +232,7 @@ public class GameManager : MonoBehaviour
                         case 2: moveVec = new Vector3(customX, customY, 0); break;  //カスタム
                     }
 
-                    savedTypeActions[(int)effectMode_Type] = StartCoroutine(VibeJudgeCircle(moveVec, boolPreviews[0], boolPreviews[1], boolPreviews[2]));
+                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(VibeJudgeCircle(moveVec, boolPreviews[0], boolPreviews[1], boolPreviews[2]));
                 }
                 break;
             case EffectModeType.BACK_EXPAND_WITH_ROTATION_1:
@@ -236,19 +258,22 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        orderNum_Type++;
+        if(!notAddOrderNum) orderNum_Type++;
     }
 
-    public void HoldAction(bool isAction = true)
+    public void HoldAction(EnumData.Judgement argJudgement, bool isAction = true)
     {
-        switch (effectMode_Hold)
+        // 最新の演出を保存（最初だけ）
+        if(orderNum_Hold == 0)　currentEffectMode_Hold = effectMode_Hold[(int)argJudgement];
+
+        switch (currentEffectMode_Hold)
         {
             case EffectModeHold.NONE:
                 break;
             case EffectModeHold.LANE_ROTATE_1:
-                if (isAction)
+                if (isAction && (orderNum_Hold == 0 || (orderNum_Hold > 0 && argJudgement != EnumData.Judgement.MISS)))
                 {
-                    RestartAction(effectMode_Hold, false, false, false);//直前の変化をリセットしない
+                    RestartAction(currentEffectMode_Hold, false, false, false);//直前の変化をリセットしない
                     RestartAction(EffectModeType.LANE_ROTATE_1, false, false, false);//直前の変化をリセットしない
                     RestartAction(EffectModeType.LANE_VIBE_1, true, false, false);
                     RestartAction(EffectModeType.LANE_SLIME_1, false, true, false);
@@ -256,16 +281,16 @@ public class GameManager : MonoBehaviour
                     switch (orderNum_Hold)
                     {
                         case 0:
-                            savedHoldActions[(int)effectMode_Hold] = StartCoroutine(RotateJudgeCircleGap(-120, 0.8f));
+                            savedHoldActions[(int)currentEffectMode_Hold] = StartCoroutine(RotateJudgeCircleGap(-120, 0.8f));
                             break;
                         case 1:
-                            savedHoldActions[(int)effectMode_Hold] = StartCoroutine(RotateJudgeCircleGap(360 - (int)laneGroup.eulerAngles.z + 360, 0.3f));
+                            savedHoldActions[(int)currentEffectMode_Hold] = StartCoroutine(RotateJudgeCircleGap(360 - (int)laneGroup.eulerAngles.z + 360, 0.3f));
                             break;
                     }
                 }
                 break;
             case EffectModeHold.LANE_ARROW_1:
-                if (isAction)
+                if (isAction && (orderNum_Hold == 0 || (orderNum_Hold > 0 && argJudgement != EnumData.Judgement.MISS)))
                 {
                     RestartAction(EffectModeType.LANE_ROTATE_1, false, false, false);
 
@@ -280,18 +305,18 @@ public class GameManager : MonoBehaviour
                             break;
                         case 1:
                             StopCoroutine(savedCoroutine);
-                            savedHoldActions[(int)effectMode_Hold] = StartCoroutine(TurnMoveJudgeCircle(new Vector3(laneGroup.position.magnitude * 4, 0, 0), new Vector3(laneGroup.position.magnitude * -3, 0, 0), 0.2f, MovementType.QUICK, MovementType.SLOW, true));
+                            savedHoldActions[(int)currentEffectMode_Hold] = StartCoroutine(TurnMoveJudgeCircle(new Vector3(laneGroup.position.magnitude * 4, 0, 0), new Vector3(laneGroup.position.magnitude * -3, 0, 0), 0.2f, MovementType.QUICK, MovementType.SLOW, true));
                             break;
                     }
                 }
                 else if (orderNum_Hold == 1)//途中で離した場合
                 {
                     StopCoroutine(savedCoroutine);
-                    savedHoldActions[(int)effectMode_Hold] = StartCoroutine(TurnMoveJudgeCircle(new Vector3(laneGroup.position.magnitude * 3, 0, 0), new Vector3(laneGroup.position.magnitude * -2, 0, 0), 0.2f, MovementType.QUICK, MovementType.SLOW, true));
+                    savedHoldActions[(int)currentEffectMode_Hold] = StartCoroutine(TurnMoveJudgeCircle(new Vector3(laneGroup.position.magnitude * 3, 0, 0), new Vector3(laneGroup.position.magnitude * -2, 0, 0), 0.2f, MovementType.QUICK, MovementType.SLOW, true));
                 }
                 break;
             case EffectModeHold.BACK_PARGE_1:
-                if (isAction)
+                if (isAction && (orderNum_Hold == 0 || (orderNum_Hold > 0 && argJudgement != EnumData.Judgement.MISS)))
                 {
                     switch (orderNum_Hold)
                     {
@@ -485,6 +510,24 @@ public class GameManager : MonoBehaviour
     public void SetIsSetting(bool argIsSetting)
     {
         isSetting = argIsSetting;
+    }
+
+    /// <summary>
+    /// 演出を設定中の判定を変更する
+    /// </summary>
+    /// <param name="argJudgeNum"></param>
+    public void SetChaningJudgement(int argJudgeNum)
+    {
+        // インデックス番号が 1～3 であるため、補正する
+        int _judgeNum = argJudgeNum + 1;
+
+        _selectingEffectIndex = _judgeNum;
+
+        // MISSの場合は、一部のボタンを隠す
+        foreach(var obj in hideObjAtSetMiss)
+        {
+            obj.SetActive(argJudgeNum != 2);
+        }
     }
     #endregion
 
@@ -777,10 +820,10 @@ public class GameManager : MonoBehaviour
             if (savedHoldActions[i] != null) { StopCoroutine(savedHoldActions[i]); }
         }
 
-        switch (effectMode_Type)
+        switch (currentEffectMode_Type)
         {
             case EffectModeType.LANE_ROTATE_1:
-                if (effectMode_Hold != EffectModeHold.LANE_ROTATE_1)
+                if (currentEffectMode_Hold != EffectModeHold.LANE_ROTATE_1)
                 {
                     if ((int)laneGroup.eulerAngles.z != 0)
                     {
@@ -795,7 +838,7 @@ public class GameManager : MonoBehaviour
             default:
                 break;
         }
-        switch (effectMode_Hold)
+        switch (currentEffectMode_Hold)
         {
             case EffectModeHold.LANE_ROTATE_1:
                 if ((int)laneGroup.eulerAngles.z != 0)
@@ -888,4 +931,23 @@ public class GameManager : MonoBehaviour
         return Mathf.Cos(Mathf.PI * deg / 180f);
     }
     #endregion
+
+    /*
+    [ContextMenu("演出を変更する判定の変更")]
+    public void ChangeJudgementInChange()
+    {
+        Debug.Log($"{(EnumData.Judgement)_selectingEffectIndex}");
+        _selectingEffectIndex = (_selectingEffectIndex + 1) % (int)EnumData.Judgement.MAX;
+        if ((EnumData.Judgement)_selectingEffectIndex == EnumData.Judgement.NONE) _selectingEffectIndex++;
+        Debug.Log($"=> {(EnumData.Judgement)_selectingEffectIndex}");
+    }
+    [ContextMenu("判定後との演出を表示")]
+    public void ShowDirectionByJudge()
+    {
+        for(int i = 1; i < (int)EnumData.Judgement.MAX; i++)
+        {
+            Debug.Log($"【{(EnumData.Judgement)i}】Type:{(EffectModeType)effectMode_Type[i]}, Hold:{(EffectModeHold)effectMode_Hold[i]}");
+        }
+    }
+    */
 }

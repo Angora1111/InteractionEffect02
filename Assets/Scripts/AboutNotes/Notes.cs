@@ -163,7 +163,6 @@ public class Notes : MonoBehaviour
             float distance = Mathf.Abs(hit2D.transform.localPosition.x - judgeBarCircle.localPosition.x);
 
             // 距離から判定処理を行う
-            //return JudgementByDistance(distance, radius);
             return JudgementByConstDistance(distance, CommonData.perfectDist, CommonData.goodDist);
         }
         else 
@@ -184,21 +183,21 @@ public class Notes : MonoBehaviour
         {
             // PERFECT
             gm.ShowJudge(EnumData.Judgement.PERFECT);
-            JudgeDirection();
+            JudgeDirection(EnumData.Judgement.PERFECT);
             return EnumData.Judgement.PERFECT;
         }
         else if (distance < creteria * 6 / 8)
         {
             // GOOD
             gm.ShowJudge(EnumData.Judgement.GOOD);
-            JudgeDirection();
+            JudgeDirection(EnumData.Judgement.GOOD);
             return EnumData.Judgement.GOOD;
         }
         else
         {
             // MISS
             gm.ShowJudge(EnumData.Judgement.MISS);
-            JudgeDirection(false);
+            JudgeDirection(EnumData.Judgement.MISS);
             return EnumData.Judgement.MISS;
         }
     }
@@ -216,21 +215,21 @@ public class Notes : MonoBehaviour
         {
             // PERFECT
             gm.ShowJudge(EnumData.Judgement.PERFECT);
-            JudgeDirection();
+            JudgeDirection(EnumData.Judgement.PERFECT);
             return EnumData.Judgement.PERFECT;
         }
         else if (distance < creteria_good)
         {
             // GOOD
             gm.ShowJudge(EnumData.Judgement.GOOD);
-            JudgeDirection();
+            JudgeDirection(EnumData.Judgement.GOOD);
             return EnumData.Judgement.GOOD;
         }
         else
         {
             // MISS
             gm.ShowJudge(EnumData.Judgement.MISS);
-            JudgeDirection(false);
+            JudgeDirection(EnumData.Judgement.MISS);
             return EnumData.Judgement.MISS;
         }
     }
@@ -253,7 +252,7 @@ public class Notes : MonoBehaviour
     /// <summary>
     /// ノーツを取った際の演出を実行する処理（派生クラスを優先）
     /// </summary>
-    protected virtual void JudgeDirection(bool argIsAction = true) { }
+    protected virtual void JudgeDirection(EnumData.Judgement argJudgement) { }
 
     /// <summary>
     /// Update()関数内の各処理が終了した後に実行されるその他の処理（派生クラスを優先）
