@@ -24774,6 +24774,10 @@ MonoBehaviour:
   square_Appear: {fileID: 6079430773138912960, guid: afead0e0ea056444fab88090c0ad4197, type: 3}
   square_Parge: {fileID: 7603049510315200685, guid: 41b2e6dcc5b0936469a84742dafb7d5d, type: 3}
   squareGroup: {fileID: 2083637113}
+  hideObjAtSetMiss:
+  - {fileID: 1518210115}
+  - {fileID: 625903031}
+  - {fileID: 555714296}
   testMode_Type: 0
   testMode_Hold: 0
   test: 0

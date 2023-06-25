@@ -86,8 +86,9 @@ public class GameManager : MonoBehaviour
     private Vector3 pjudgeCirclePos;                // 変化が実行される前の判定枠の位置
     private Vector3 pjudgeCircleScale;              // 変化が実行される前の判定枠の大きさ
     private Vector3 planeGroupRot;                  // 変化が実行される前の判定グループの角度
+    [SerializeField] GameObject[] hideObjAtSetMiss; // Missの演出を設定するときに非表示にするオブジェクト
 
-    [Header("テスト用 ----------------")]
+    [Header("テスト用 --------------------------------------------------------------------")]
     [SerializeField] EffectModeType testMode_Type = EffectModeType.NONE;
     [SerializeField] EffectModeHold testMode_Hold = EffectModeHold.NONE;
     [SerializeField] bool test = false; // テスト用か否か
@@ -186,7 +187,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void TypeAction(EnumData.Judgement argJudgement, bool isAction = true)
+    public void TypeAction(EnumData.Judgement argJudgement, bool isAction = true, bool notAddOrderNum = false)
     {
         // 最新の演出を保存
         currentEffectMode_Type = effectMode_Type[(int)argJudgement];
@@ -257,7 +258,7 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        orderNum_Type++;
+        if(!notAddOrderNum) orderNum_Type++;
     }
 
     public void HoldAction(EnumData.Judgement argJudgement, bool isAction = true)
@@ -518,9 +519,15 @@ public class GameManager : MonoBehaviour
     public void SetChaningJudgement(int argJudgeNum)
     {
         // インデックス番号が 1～3 であるため、補正する
-        argJudgeNum++;
+        int _judgeNum = argJudgeNum + 1;
 
-        _selectingEffectIndex = argJudgeNum;
+        _selectingEffectIndex = _judgeNum;
+
+        // MISSの場合は、一部のボタンを隠す
+        foreach(var obj in hideObjAtSetMiss)
+        {
+            obj.SetActive(argJudgeNum != 2);
+        }
     }
     #endregion
 

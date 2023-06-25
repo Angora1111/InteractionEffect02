@@ -10,6 +10,7 @@ public class LongNotes : Notes
     [SerializeField] Transform passObj;
     private bool isHolding = false; // 保持中かどうか
     private bool isEndObj = false;  // 終点オブジェクトが生成されているかどうか
+    private bool isAtRelease = false;   // 判定処理が「離した」ことによるものかどうか
 
     protected override void CatchProcess()
     {
@@ -35,6 +36,9 @@ public class LongNotes : Notes
         // 始点を取れている状態なら
         if (isHolding)
         {
+            // フラグを立てる
+            isAtRelease = true;
+
             // 始点と終点の距離から、判定処理を行う
             float rangeOfStartAndEnd = Mathf.Abs(passObj.localPosition.x * LTOG_LONGNOTES);
             //JudgementByDistance(rangeOfStartAndEnd, CommonData.missDist);
@@ -77,7 +81,15 @@ public class LongNotes : Notes
 
     protected override void JudgeDirection(EnumData.Judgement argJudgement)
     {
-        gm.HoldAction(argJudgement);
+        // キャッチするときのMISSはタイプノーツと同じ演出にする
+        if (!isAtRelease && argJudgement == EnumData.Judgement.MISS)
+        {
+            gm.TypeAction(argJudgement, true, true);
+        }
+        else
+        {
+            gm.HoldAction(argJudgement);
+        }
     }
 
     public override void SetLayer(int num)
