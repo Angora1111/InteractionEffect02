@@ -75,9 +75,9 @@ public class LongNotes : Notes
         if (endObj.localPosition.x < (-CommonData.neglectDist - JUDGE_POS) / LTOG_LONGNOTES) { MissByNeglect(); }
     }
 
-    protected override void JudgeDirection(bool argIsAction = true)
+    protected override void JudgeDirection(EnumData.Judgement argJudgement)
     {
-        gm.HoldAction(argIsAction);
+        gm.HoldAction(argJudgement);
     }
 
     public override void SetLayer(int num)
