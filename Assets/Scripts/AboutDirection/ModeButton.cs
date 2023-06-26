@@ -54,6 +54,7 @@ public class ModeButton : MonoBehaviour
 
     public void SetMode()
     {
+        GameManager.showingSettingPage = mode;
         switch (mode)
         {
             case GameManager.ChangeMode.TYPE:

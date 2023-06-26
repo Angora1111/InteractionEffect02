@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.Playables;
 using Unity.VisualScripting;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 public class GameManager : MonoBehaviour
 {
@@ -88,6 +89,11 @@ public class GameManager : MonoBehaviour
     private Vector3 planeGroupRot;                  // 変化が実行される前の判定グループの角度
     [SerializeField] GameObject[] hideObjAtSetMiss; // Missの演出を設定するときに非表示にするオブジェクト
 
+    public static ChangeMode showingSettingPage = ChangeMode.TYPE;    // 現在設定画面に表示中のページ番号
+    [SerializeField] Text settingPageHeaderText;                      // 設定画面のヘッダーText
+    [SerializeField] GameObject settingPageNext;                      // 設定画面の進む矢印
+    [SerializeField] GameObject settingPageBack;                      // 設定画面の戻る矢印
+
     [Header("テスト用 --------------------------------------------------------------------")]
     [SerializeField] EffectModeType testMode_Type = EffectModeType.NONE;
     [SerializeField] EffectModeHold testMode_Hold = EffectModeHold.NONE;
@@ -119,6 +125,20 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        // 設定用ページの更新
+        if(showingSettingPage == ChangeMode.TYPE)
+        {
+            settingPageHeaderText.text = "1回押し";
+            settingPageNext.SetActive(true);
+            settingPageBack.SetActive(false);
+        }
+        if(showingSettingPage == ChangeMode.HOLD)
+        {
+            settingPageHeaderText.text = "長押し→離す";
+            settingPageNext.SetActive(false);
+            settingPageBack.SetActive(true);
+        }
+
         if (Input.GetKeyDown(KeyCode.Alpha0) && canStart && !isSetting)
         {
             if (test)//テスト用
@@ -528,6 +548,15 @@ public class GameManager : MonoBehaviour
         {
             obj.SetActive(argJudgeNum != 2);
         }
+    }
+
+    public void GoNextSettingPage()
+    {
+        showingSettingPage = (ChangeMode)Mathf.Min((float)(showingSettingPage + 1), (float)ChangeMode.HOLD);
+    }
+    public void GoBackSettingPage()
+    {
+        showingSettingPage = (ChangeMode)Mathf.Max((float)(showingSettingPage - 1), (float)ChangeMode.TYPE);
     }
     #endregion
 
