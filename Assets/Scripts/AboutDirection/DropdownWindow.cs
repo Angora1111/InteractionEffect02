@@ -15,13 +15,21 @@ public class DropdownWindow : MonoBehaviour
     [SerializeField] bool setInputField = false;
     private int value;
     private GameManager gm;
+    private int pEffectIndex = 0;
 
     private void Start()
     {
         gm = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
+
     void Update()
     {
+        if(GameManager.selectingEffectIndex != pEffectIndex)
+        {
+            gm.SetPreviousIntFromDropdown(modeButton);
+            pEffectIndex = GameManager.selectingEffectIndex;
+        }
+
         value = dropdown.value;
         ChangeInSpecificValue(specificValue);
         gm.SetIntFromDropdown(modeButton);
@@ -30,6 +38,11 @@ public class DropdownWindow : MonoBehaviour
     public int GetValueFromDropdown()
     {
         return value;
+    }
+
+    public void SetValue(int argVal)
+    {
+        dropdown.value = argVal;
     }
 
     private void ChangeInSpecificValue(int valueNum)

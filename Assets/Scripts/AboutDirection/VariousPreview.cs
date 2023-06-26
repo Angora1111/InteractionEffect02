@@ -9,6 +9,8 @@ public class VariousPreview : MonoBehaviour
     private GameManager gm;
     private Button modeButton;
     private ModeButton modeButtonData;
+    private bool isActive = false;
+    private int pEffectIndex = 0;
 
     private void Start()
     {
@@ -29,6 +31,8 @@ public class VariousPreview : MonoBehaviour
                 {
                     obj.SetActive(false);
                 }
+
+                isActive = false;
             }
         }
         // ボタンが選択されているとき
@@ -42,10 +46,25 @@ public class VariousPreview : MonoBehaviour
                     obj.SetActive(true);
                 }
 
-                //GameManagerに設定する
-                gm.SetColors(transform);
-                gm.SetBools(transform);
-                gm.SetFloatFromInputField(transform);
+                // 表示されて初回だった場合
+                if (!isActive || GameManager.selectingEffectIndex != pEffectIndex)
+                {
+                    // GameManagerから読み込む
+                    gm.SetPreviousColors(transform);
+                    gm.SetPreviousBools(transform);
+                    gm.SetPreviousFloatFromInputField(transform);
+                }
+                // 2回目以降は
+                else
+                {
+                    // GameManagerに設定する
+                    gm.SetColors(transform);
+                    gm.SetBools(transform);
+                    gm.SetFloatFromInputField(transform);
+                }
+
+                isActive = true;
+                pEffectIndex = GameManager.selectingEffectIndex;
             }
             else
             {
@@ -57,6 +76,8 @@ public class VariousPreview : MonoBehaviour
                         obj.SetActive(false);
                     }
                 }
+
+                isActive = false;
             }
         }
     }

@@ -26359,7 +26359,7 @@ MonoBehaviour:
   - {fileID: 1194514353}
   - {fileID: 1486729971}
   - {fileID: 33331641}
-  flashSquare: {fileID: 1806645898}
+  flashSquare: {fileID: 1806645899}
   square_Appear: {fileID: 6079430773138912960, guid: afead0e0ea056444fab88090c0ad4197, type: 3}
   square_Parge: {fileID: 7603049510315200685, guid: 41b2e6dcc5b0936469a84742dafb7d5d, type: 3}
   squareGroup: {fileID: 2083637113}
@@ -28989,7 +28989,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 809b0cbc0bcb69c45be1b3b51461f4b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  colorPreview: {fileID: 225774666}
 --- !u!212 &1806645900
 SpriteRenderer:
   m_ObjectHideFlags: 0

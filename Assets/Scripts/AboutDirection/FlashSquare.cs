@@ -6,7 +6,6 @@ using UnityEngine.UI;
 public class FlashSquare : MonoBehaviour
 {
     Color originalColor = default;
-    [SerializeField] Image colorPreview;
     private SpriteRenderer sr;
     private GameManager gm;
     private float waitTime;
@@ -19,13 +18,25 @@ public class FlashSquare : MonoBehaviour
     private void OnEnable()
     {
         sr = transform.GetComponent<SpriteRenderer>();
-        originalColor = colorPreview.color;
+        originalColor = default;
 
         StartCoroutine(Action());
     }
 
+    /// <summary>
+    /// 色を変更する
+    /// </summary>
+    /// <param name="argColor"></param>
+    public void ChangeColor(Color argColor)
+    {
+        originalColor = argColor;
+    }
+
     IEnumerator Action()
     {
+        // 色が設定されるまで待つ
+        yield return new WaitUntil(() => originalColor != default);
+
         waitTime = 0.15f * gm.GetFixedActionSpeed();
         float exe_times = gm.SetExeTimes(waitTime, 10f);
         //Debug.Log($"実行回数：{exe_times}");

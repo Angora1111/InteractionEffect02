@@ -67,17 +67,20 @@ public class GameManager : MonoBehaviour
     private int orderNum_Type = 0;  // 順番管理 
     private int orderNum_Hold = 0;
     [SerializeField] GameObject[] Squares;// 背景の格納用
-    [SerializeField] GameObject flashSquare;
+    [SerializeField] FlashSquare flashSquare;
     [SerializeField] AppearSquare square_Appear;    // 内→外の四角
     [SerializeField] PargeSquare square_Parge;      // パージする四角
     private GameObject pargingSquare;
     [SerializeField] GameObject squareGroup;        // 四角が入れられるところ
-    private List<Color> colorPreviews_appear;       // 色を格納するところ
-    private List<Color> colorPreviews_parge;        // 色を格納するところ
-    private List<bool> boolPreviews;                // bool値を格納するところ
-    private List<int> modePreviews;                 // dropdownのValueの値を格納するところ
-    private List<float> inputFieldPreviews_type;    // typeにおけるinputFieldの値を格納するところ
-    private List<float> inputFieldPreviews_long;    // longにおけるinputFieldの値を格納するところ
+
+    private List<Color>[] colorPreviews_appear;       // 色を格納するところ
+    private List<Color>[] colorPreviews_parge;        // 色を格納するところ
+    private List<bool>[] boolPreviews;                // bool値を格納するところ
+    private List<int>[] modePreviews;                 // dropdownのValueの値を格納するところ
+    private List<float>[] inputFieldPreviews_type;    // typeにおけるinputFieldの値を格納するところ
+    private List<float>[] inputFieldPreviews_long;    // longにおけるinputFieldの値を格納するところ
+    private EnumData.Judgement catchLongJudge;        // ロングノーツ始点における判定
+
     private bool isSetting = false; // 設定中かどうか
     private bool canStart = true;   // プレイ中か否か
     private float fixedActionSpeed = 1.0f;  // 変化の速度
@@ -103,12 +106,12 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         judgeSr = GameObject.Find("JudgeCircle").GetComponent<SpriteRenderer>();
-        colorPreviews_appear = new List<Color>();
-        colorPreviews_parge = new List<Color>();
-        boolPreviews = new List<bool>();
-        modePreviews = new List<int>();
-        inputFieldPreviews_type = new List<float>();
-        inputFieldPreviews_long = new List<float>();
+        colorPreviews_appear = new List<Color>[(int)EnumData.Judgement.MAX - 1] { new List<Color>(), new List<Color>(), new List<Color>()};
+        colorPreviews_parge = new List<Color>[(int)EnumData.Judgement.MAX - 1] { new List<Color>(), new List<Color>(), new List<Color>() };
+        boolPreviews = new List<bool>[(int)EnumData.Judgement.MAX - 1] { new List<bool>(), new List<bool>(), new List<bool>()};
+        modePreviews = new List<int>[(int)EnumData.Judgement.MAX - 1] { new List<int>(), new List<int>(), new List<int>() };
+        inputFieldPreviews_type = new List<float>[(int)EnumData.Judgement.MAX - 1] { new List<float>(), new List<float>(), new List<float>() };
+        inputFieldPreviews_long = new List<float>[(int)EnumData.Judgement.MAX - 1] { new List<float>(), new List<float>(), new List<float>() };
         savedTypeActions = new Coroutine[(int)EffectModeType.MAX];
         savedHoldActions = new Coroutine[(int)EffectModeHold.MAX];
         planeGroupPos = laneGroup.position;
@@ -213,6 +216,8 @@ public class GameManager : MonoBehaviour
     {
         // 最新の演出を保存
         currentEffectMode_Type = effectMode_Type[(int)argJudgement];
+        // 判定の番号を保存
+        int judgeIndex = (int)argJudgement - 1;
 
         switch (currentEffectMode_Type)
         {
@@ -241,20 +246,20 @@ public class GameManager : MonoBehaviour
             case EffectModeType.LANE_VIBE_1:
                 if (isAction)
                 {
-                    float customX = inputFieldPreviews_type[0];
-                    float customY = inputFieldPreviews_type[1];
+                    float customX = inputFieldPreviews_type[judgeIndex][0];
+                    float customY = inputFieldPreviews_type[judgeIndex][1];
 
                     RestartAction(currentEffectMode_Type, true, false, false);
 
                     Vector3 moveVec = Vector3.zero;
-                    switch (modePreviews[0])
+                    switch (modePreviews[judgeIndex][0])
                     {
                         case 0: moveVec = new Vector3(1.5f, 0, 0); break;           //平行
                         case 1: moveVec = new Vector3(0, 1.5f, 0); break;           //垂直
                         case 2: moveVec = new Vector3(customX, customY, 0); break;  //カスタム
                     }
 
-                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(VibeJudgeCircle(moveVec, boolPreviews[0], boolPreviews[1], boolPreviews[2]));
+                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(VibeJudgeCircle(moveVec, boolPreviews[judgeIndex][0], boolPreviews[judgeIndex][1], boolPreviews[judgeIndex][2]));
                 }
                 break;
             case EffectModeType.BACK_EXPAND_WITH_ROTATION_1:
@@ -263,10 +268,10 @@ public class GameManager : MonoBehaviour
                     switch (orderNum_Type % 2)
                     {
                         case 0:
-                            SquareAppearInit(colorPreviews_appear[0]);
+                            SquareAppearInit(colorPreviews_appear[judgeIndex][0]);
                             break;
                         case 1:
-                            SquareAppearInit(colorPreviews_appear[1]);
+                            SquareAppearInit(colorPreviews_appear[judgeIndex][1]);
                             break;
                     }
                 }
@@ -274,8 +279,9 @@ public class GameManager : MonoBehaviour
             case EffectModeType.BACK_FLASH_1:
                 if (isAction)
                 {
-                    flashSquare.SetActive(false);
-                    flashSquare.SetActive(true);
+                    flashSquare.gameObject.SetActive(false);
+                    flashSquare.gameObject.SetActive(true);
+                    flashSquare.ChangeColor(colorPreviews_appear[judgeIndex][0]);
                 }
                 break;
         }
@@ -285,8 +291,14 @@ public class GameManager : MonoBehaviour
 
     public void HoldAction(EnumData.Judgement argJudgement, bool isAction = true)
     {
-        // 最新の演出を保存（最初だけ）
-        if(orderNum_Hold == 0)　currentEffectMode_Hold = effectMode_Hold[(int)argJudgement];
+        // 最新の演出と始点の判定を保存（最初だけ）
+        if (orderNum_Hold == 0)
+        {
+            currentEffectMode_Hold = effectMode_Hold[(int)argJudgement];
+            catchLongJudge = argJudgement;
+        }
+        // 判定の番号を保存
+        int judgeIndex = (int)argJudgement - 1;
 
         switch (currentEffectMode_Hold)
         {
@@ -312,9 +324,9 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case EffectModeHold.LANE_ARROW_1:
-                float drawDistance = inputFieldPreviews_long[0];
-                float fireMulInSuccess = inputFieldPreviews_long[1];
-                float fireMulInFailure = inputFieldPreviews_long[2];
+                float drawDistance = inputFieldPreviews_long[(int)catchLongJudge - 1][0];
+                float fireMulInSuccess = inputFieldPreviews_long[(int)catchLongJudge - 1][1];
+                float fireMulInFailure = inputFieldPreviews_long[(int)catchLongJudge - 1][2];
 
                 if (isAction && (orderNum_Hold == 0 || (orderNum_Hold > 0 && argJudgement != EnumData.Judgement.MISS)))
                 {
@@ -347,7 +359,7 @@ public class GameManager : MonoBehaviour
                     switch (orderNum_Hold)
                     {
                         case 0:
-                            SquarePargeInit(colorPreviews_parge[0]);
+                            SquarePargeInit(colorPreviews_parge[judgeIndex][0]);
                             break;
                         case 1:
                             pargingSquare.GetComponent<PargeSquare>().SetKeepingFalse();
@@ -406,6 +418,40 @@ public class GameManager : MonoBehaviour
 
     #region 実行前の準備
     /// <summary>
+    /// 予定の色を、以前のものに合わせる
+    /// </summary>
+    /// <param name="button"></param>
+    public void SetPreviousColors(Transform button)
+    {
+        var list = new List<Color>();
+        switch (button.gameObject.GetComponent<ModeButton>().Getmode())
+        {
+            case ChangeMode.TYPE:
+                list = colorPreviews_appear[selectingEffectIndex - 1];
+                break;
+            case ChangeMode.HOLD:
+                list = colorPreviews_parge[selectingEffectIndex - 1];
+                break;
+            default:
+                break;
+        }
+
+        // 未設定なら抜ける
+        if (list == null) return;
+        if (list.Count == 0) return;
+
+        int _listIndex = 0;
+        foreach (Transform child in button)
+        {
+            if (child.gameObject.TryGetComponent<ColorImageData>(out var data) && child.gameObject.TryGetComponent<Image>(out Image image))
+            {
+                if (_listIndex >= list.Count) return;
+                image.color = list[_listIndex];
+                _listIndex++;
+            }
+        }
+    }
+    /// <summary>
     /// 予定の色をセットする
     /// </summary>
     /// <param name="button"></param>
@@ -415,10 +461,10 @@ public class GameManager : MonoBehaviour
         switch (button.gameObject.GetComponent<ModeButton>().Getmode())
         {
             case ChangeMode.TYPE:
-                list = colorPreviews_appear;
+                list = colorPreviews_appear[selectingEffectIndex - 1];
                 break;
             case ChangeMode.HOLD:
-                list = colorPreviews_parge;
+                list = colorPreviews_parge[selectingEffectIndex - 1];
                 break;
             default:
                 break;
@@ -429,13 +475,34 @@ public class GameManager : MonoBehaviour
         }
         foreach (Transform child in button)
         {
-            if (child.gameObject.TryGetComponent<Image>(out Image image))
+            if (child.gameObject.TryGetComponent<ColorImageData>(out var data) && child.gameObject.TryGetComponent<Image>(out Image image))
             {
                 list.Add(image.color);
             }
         }
     }
 
+    /// <summary>
+    /// 予定のbool値を、以前のものに合わせる
+    /// </summary>
+    /// <param name="button"></param>
+    public void SetPreviousBools(Transform button)
+    {
+        // 未設定なら初期値にする
+        if (boolPreviews[selectingEffectIndex - 1] == null) return;
+        if (boolPreviews[selectingEffectIndex - 1].Count == 0) return;
+
+        int _index = 0;
+        foreach (Transform child in button)
+        {
+            if (child.gameObject.TryGetComponent<BoolWindow>(out BoolWindow bw))
+            {
+                if (_index >= boolPreviews[selectingEffectIndex - 1].Count) return;
+                bw.SetBool(boolPreviews[selectingEffectIndex - 1][_index]);
+                _index++;
+            }
+        }
+    }
     /// <summary>
     /// 予定のbool値をセットする
     /// </summary>
@@ -444,17 +511,38 @@ public class GameManager : MonoBehaviour
     {
         if (boolPreviews != null)
         {
-            boolPreviews.Clear();
+            boolPreviews[selectingEffectIndex - 1].Clear();
         }
         foreach (Transform child in button)
         {
             if (child.gameObject.TryGetComponent<BoolWindow>(out BoolWindow bw))
             {
-                boolPreviews.Add(bw.GetBool());
+                boolPreviews[selectingEffectIndex - 1].Add(bw.GetBool());
             }
         }
     }
 
+    /// <summary>
+    /// 予定のint値を、以前のものに合わせる
+    /// </summary>
+    /// <param name="button"></param>
+    public void SetPreviousIntFromDropdown(Transform button)
+    {
+        // 未設定なら抜ける
+        if (modePreviews[selectingEffectIndex - 1] == null) return;
+        if (modePreviews[selectingEffectIndex - 1].Count == 0) return;
+
+        int _index = 0;
+        foreach (Transform child in button)
+        {
+            if (child.gameObject.TryGetComponent<DropdownWindow>(out DropdownWindow ddw))
+            {
+                if (_index >= modePreviews[selectingEffectIndex - 1].Count) return;
+                ddw.SetValue(modePreviews[selectingEffectIndex - 1][_index]);
+                _index++;
+            }
+        }
+    }
     /// <summary>
     /// 予定のint値を、Dropdownから受け取ってセットする
     /// </summary>
@@ -463,17 +551,76 @@ public class GameManager : MonoBehaviour
     {
         if (modePreviews != null)
         {
-            modePreviews.Clear();
+            modePreviews[selectingEffectIndex - 1].Clear();
         }
         foreach (Transform child in button)
         {
             if (child.gameObject.TryGetComponent<DropdownWindow>(out DropdownWindow ddw))
             {
-                modePreviews.Add(ddw.GetValueFromDropdown());
+                modePreviews[selectingEffectIndex - 1].Add(ddw.GetValueFromDropdown());
             }
         }
     }
 
+    /// <summary>
+    /// 予定のfloat値を、以前のものに合わせる
+    /// </summary>
+    /// <param name="button"></param>
+    public void SetPreviousFloatFromInputField(Transform button)
+    {
+        var list = new List<float>();
+        if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
+        {
+            if (inputFieldPreviews_type != null)
+            {
+                list = inputFieldPreviews_type[selectingEffectIndex - 1];
+            }
+        }
+        else if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
+        {
+            if (inputFieldPreviews_long != null)
+            {
+                list =inputFieldPreviews_long[selectingEffectIndex - 1];
+            }
+        }
+
+        // 未設定なら抜ける
+        if (list == null) return;
+        if (list.Count == 0) return;
+
+        int _overallIndex = 0;
+        int _firstIndex = 0;
+        int _morereadIndex = 0;
+        foreach (Transform child in button)
+        {
+            if (child.gameObject.TryGetComponent<InputWindow>(out var iw))
+            {
+                for (int i = 0; i < iw.inputFieldCount; i++)
+                {
+                    if (_overallIndex >= list.Count) return;
+                    iw.SetValue(list[_overallIndex], _firstIndex);
+                    _overallIndex++;
+                    _firstIndex++;
+                }
+            }
+            else if (child.gameObject.CompareTag("MoreRead"))
+            {
+                foreach (Transform _child in child)
+                {
+                    if (_child.gameObject.TryGetComponent<InputWindow>(out var _iw))
+                    {
+                        for (int i = 0; i < _iw.inputFieldCount; i++)
+                        {
+                            if (_overallIndex >= list.Count) return;
+                            _iw.SetValue(list[_overallIndex], _morereadIndex);
+                            _overallIndex++;
+                            _morereadIndex++;
+                        }
+                    }
+                }
+            }
+        }
+    }
     /// <summary>
     /// 予定のfloat値を、InputFieldから受け取ってセットする
     /// </summary>
@@ -484,14 +631,14 @@ public class GameManager : MonoBehaviour
         {
             if (inputFieldPreviews_type != null)
             {
-                inputFieldPreviews_type.Clear();
+                inputFieldPreviews_type[selectingEffectIndex - 1].Clear();
             }
         }
         else if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
         {
             if (inputFieldPreviews_long != null)
             {
-                inputFieldPreviews_long.Clear();
+                inputFieldPreviews_long[selectingEffectIndex - 1].Clear();
             }
         }
         foreach (Transform child in button)
@@ -503,11 +650,11 @@ public class GameManager : MonoBehaviour
                 {
                     if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
                     {
-                        inputFieldPreviews_type.Add(valueList[i]);
+                        inputFieldPreviews_type[selectingEffectIndex - 1].Add(valueList[i]);
                     }
                     else if(button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
                     {
-                        inputFieldPreviews_long.Add(valueList[i]);
+                        inputFieldPreviews_long[selectingEffectIndex - 1].Add(valueList[i]);
                     }
                 }
             }
@@ -522,11 +669,11 @@ public class GameManager : MonoBehaviour
                         {
                             if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
                             {
-                                inputFieldPreviews_type.Add(_valueList[i]);
+                                inputFieldPreviews_type[selectingEffectIndex - 1].Add(_valueList[i]);
                             }
                             else if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
                             {
-                                inputFieldPreviews_long.Add(_valueList[i]);
+                                inputFieldPreviews_long[selectingEffectIndex - 1].Add(_valueList[i]);
                             }
                         }
                     }
