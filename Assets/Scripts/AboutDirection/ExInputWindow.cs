@@ -1,23 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor;
 
-public class InputWindow : MonoBehaviour
+public class ExInputWindow : InputWindow
 {
-    protected GameManager gm;                     // GameManager
-    [SerializeField] protected Transform modeButton;      // 対応する演出のボタン    
-    [SerializeField] protected RectTransform backWindow;  // ウィンドウのtransform
-    [SerializeField] protected GameObject inputFieldObj;  // インプットフィールドのプレハブ
-    [Header("インプットフィールドの個数を指定します（1～8）")]
+    private const int TOGGLE_HEIGHT = 120;
 
-    [SerializeField] protected int objNum = 1;            // インプットフィールドの数
-    [HideInInspector]
-    [SerializeField] protected int pobjNum = 1;
-    protected List<GameObject> destroyedObjects;
+    [SerializeField] Toggle isEdittingToggle;
+    [SerializeField] GameObject backBlackObj;
 
-    #region 実行外で設定するための部分
     private void OnValidate()
     {
         if (objNum != 0)// 値を消したときは反応しないようにする
@@ -31,7 +24,7 @@ public class InputWindow : MonoBehaviour
             pobjNum = objNum;
 
             // 変化した値に応じてウィンドウの大きさを変更する
-            float windowHeight = 40 + 110 * objNum;
+            float windowHeight = 40 + 110 * objNum + TOGGLE_HEIGHT;
             backWindow.sizeDelta = new Vector2(backWindow.sizeDelta.x, windowHeight);
 
             // 変化した値に応じてインプットフィールドを増加・減少させる
@@ -55,7 +48,7 @@ public class InputWindow : MonoBehaviour
             }
 
             // インプットフィールドの位置を調整する
-            for (int i = 0; i < transform.childCount; i++)
+            for (int i = 1; i < transform.childCount; i++)
             {
                 var child = transform.GetChild(i).GetComponent<RectTransform>();
                 float childPosY = windowHeight / 2 - 75 - 110 * i;
@@ -64,47 +57,24 @@ public class InputWindow : MonoBehaviour
         }
     }
 
-    protected void DestroyInEditor()
-    {
-        EditorApplication.delayCall -= DestroyInEditor;
-        if (destroyedObjects != null)
-        {
-            int listCount = destroyedObjects.Count;
-            for (int i = 0; i < listCount; i++)
-            {
-                DestroyImmediate(destroyedObjects[i]);
-            }
-        }
-    }
-    #endregion
-
-    private void Start()
-    {
-        gm = GameObject.Find("GameManager").GetComponent<GameManager>();
-    }
-
     private void Update()
     {
+        ChangeInputInteractable();
         gm.SetFloatFromInputField(modeButton);
     }
 
-    /// <summary>
-    /// InputField内の値をまとめて返す
-    /// </summary>
-    /// <returns></returns>
-    public List<float> GetValueFromInputField()
+    private void ChangeInputInteractable()
     {
-        var values = new List<float>();
-        foreach (Transform child in transform)
+        gm.SetIsSetting(isEdittingToggle.isOn);
+
+        foreach(Transform child in transform)
         {
-            if (child.gameObject.TryGetComponent<InputField>(out var inputField))
+            if(child.gameObject.TryGetComponent<InputField>(out var inf))
             {
-                if (float.TryParse(inputField.text, out float value))
-                {
-                    values.Add(value);
-                }
+                inf.interactable = isEdittingToggle.isOn;
             }
         }
-        return values;
+
+        backBlackObj.SetActive(isEdittingToggle.isOn);
     }
 }
