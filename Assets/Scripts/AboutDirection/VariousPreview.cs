@@ -8,11 +8,13 @@ public class VariousPreview : MonoBehaviour
     [SerializeField] GameObject[] previewObjs;
     private GameManager gm;
     private Button modeButton;
+    private ModeButton modeButtonData;
 
     private void Start()
     {
         gm = GameObject.Find("GameManager").GetComponent<GameManager>();
         modeButton = GetComponent<Button>();
+        modeButtonData = GetComponent<ModeButton>();
     }
 
     private void Update()
@@ -33,7 +35,7 @@ public class VariousPreview : MonoBehaviour
         else
         {
             // •\Ž¦
-            if (previewObjs != null)
+            if (previewObjs != null && GameManager.showingSettingPage == modeButtonData.Getmode())
             {
                 foreach (var obj in previewObjs)
                 {
@@ -44,6 +46,17 @@ public class VariousPreview : MonoBehaviour
                 gm.SetColors(transform);
                 gm.SetBools(transform);
                 gm.SetFloatFromInputField(transform);
+            }
+            else
+            {
+                // ”ñ•\Ž¦
+                if (previewObjs != null)
+                {
+                    foreach (var obj in previewObjs)
+                    {
+                        obj.SetActive(false);
+                    }
+                }
             }
         }
     }

@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.Playables;
 using Unity.VisualScripting;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 public class GameManager : MonoBehaviour
 {
@@ -76,6 +77,7 @@ public class GameManager : MonoBehaviour
     private List<bool> boolPreviews;                // bool値を格納するところ
     private List<int> modePreviews;                 // dropdownのValueの値を格納するところ
     private List<float> inputFieldPreviews_type;    // typeにおけるinputFieldの値を格納するところ
+    private List<float> inputFieldPreviews_long;    // longにおけるinputFieldの値を格納するところ
     private bool isSetting = false; // 設定中かどうか
     private bool canStart = true;   // プレイ中か否か
     private float fixedActionSpeed = 1.0f;  // 変化の速度
@@ -87,6 +89,11 @@ public class GameManager : MonoBehaviour
     private Vector3 pjudgeCircleScale;              // 変化が実行される前の判定枠の大きさ
     private Vector3 planeGroupRot;                  // 変化が実行される前の判定グループの角度
     [SerializeField] GameObject[] hideObjAtSetMiss; // Missの演出を設定するときに非表示にするオブジェクト
+
+    public static ChangeMode showingSettingPage = ChangeMode.TYPE;    // 現在設定画面に表示中のページ番号
+    [SerializeField] Text settingPageHeaderText;                      // 設定画面のヘッダーText
+    [SerializeField] GameObject settingPageNext;                      // 設定画面の進む矢印
+    [SerializeField] GameObject settingPageBack;                      // 設定画面の戻る矢印
 
     [Header("テスト用 --------------------------------------------------------------------")]
     [SerializeField] EffectModeType testMode_Type = EffectModeType.NONE;
@@ -101,6 +108,7 @@ public class GameManager : MonoBehaviour
         boolPreviews = new List<bool>();
         modePreviews = new List<int>();
         inputFieldPreviews_type = new List<float>();
+        inputFieldPreviews_long = new List<float>();
         savedTypeActions = new Coroutine[(int)EffectModeType.MAX];
         savedHoldActions = new Coroutine[(int)EffectModeHold.MAX];
         planeGroupPos = laneGroup.position;
@@ -119,6 +127,20 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        // 設定用ページの更新
+        if(showingSettingPage == ChangeMode.TYPE)
+        {
+            settingPageHeaderText.text = "1回押し";
+            settingPageNext.SetActive(true);
+            settingPageBack.SetActive(false);
+        }
+        if(showingSettingPage == ChangeMode.HOLD)
+        {
+            settingPageHeaderText.text = "長押し→離す";
+            settingPageNext.SetActive(false);
+            settingPageBack.SetActive(true);
+        }
+
         if (Input.GetKeyDown(KeyCode.Alpha0) && canStart && !isSetting)
         {
             if (test)//テスト用
@@ -290,6 +312,10 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case EffectModeHold.LANE_ARROW_1:
+                float drawDistance = inputFieldPreviews_long[0];
+                float fireMulInSuccess = inputFieldPreviews_long[1];
+                float fireMulInFailure = inputFieldPreviews_long[2];
+
                 if (isAction && (orderNum_Hold == 0 || (orderNum_Hold > 0 && argJudgement != EnumData.Judgement.MISS)))
                 {
                     RestartAction(EffectModeType.LANE_ROTATE_1, false, false, false);
@@ -301,18 +327,18 @@ public class GameManager : MonoBehaviour
                             RestartAction(EffectModeType.LANE_SLIME_1, false, true, false);
 
                             float laneRot = laneGroup.transform.eulerAngles.z;
-                            savedCoroutine = StartCoroutine(MoveJudgeCircle(new Vector3(-10, 0, 0), 1.0f, MovementType.STRAIGHT, true));
+                            savedCoroutine = StartCoroutine(MoveJudgeCircle(new Vector3(-drawDistance, 0, 0), 1.0f, MovementType.STRAIGHT, true));
                             break;
                         case 1:
                             StopCoroutine(savedCoroutine);
-                            savedHoldActions[(int)currentEffectMode_Hold] = StartCoroutine(TurnMoveJudgeCircle(new Vector3(laneGroup.position.magnitude * 4, 0, 0), new Vector3(laneGroup.position.magnitude * -3, 0, 0), 0.2f, MovementType.QUICK, MovementType.SLOW, true));
+                            savedHoldActions[(int)currentEffectMode_Hold] = StartCoroutine(TurnMoveJudgeCircle(new Vector3(laneGroup.position.magnitude * fireMulInSuccess, 0, 0), new Vector3(laneGroup.position.magnitude * -(fireMulInSuccess - 1f), 0, 0), 0.2f, MovementType.QUICK, MovementType.SLOW, true));
                             break;
                     }
                 }
                 else if (orderNum_Hold == 1)//途中で離した場合
                 {
                     StopCoroutine(savedCoroutine);
-                    savedHoldActions[(int)currentEffectMode_Hold] = StartCoroutine(TurnMoveJudgeCircle(new Vector3(laneGroup.position.magnitude * 3, 0, 0), new Vector3(laneGroup.position.magnitude * -2, 0, 0), 0.2f, MovementType.QUICK, MovementType.SLOW, true));
+                    savedHoldActions[(int)currentEffectMode_Hold] = StartCoroutine(TurnMoveJudgeCircle(new Vector3(laneGroup.position.magnitude * fireMulInFailure, 0, 0), new Vector3(laneGroup.position.magnitude * -(fireMulInFailure - 1f), 0, 0), 0.2f, MovementType.QUICK, MovementType.SLOW, true));
                 }
                 break;
             case EffectModeHold.BACK_PARGE_1:
@@ -454,9 +480,19 @@ public class GameManager : MonoBehaviour
     /// <param name="button"></param>
     public void SetFloatFromInputField(Transform button)
     {
-        if (inputFieldPreviews_type != null)
+        if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
         {
-            inputFieldPreviews_type.Clear();
+            if (inputFieldPreviews_type != null)
+            {
+                inputFieldPreviews_type.Clear();
+            }
+        }
+        else if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
+        {
+            if (inputFieldPreviews_long != null)
+            {
+                inputFieldPreviews_long.Clear();
+            }
         }
         foreach (Transform child in button)
         {
@@ -465,7 +501,14 @@ public class GameManager : MonoBehaviour
                 var valueList = iw.GetValueFromInputField();
                 for (int i = 0; i < valueList.Count; i++)
                 {
-                    inputFieldPreviews_type.Add(valueList[i]);
+                    if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
+                    {
+                        inputFieldPreviews_type.Add(valueList[i]);
+                    }
+                    else if(button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
+                    {
+                        inputFieldPreviews_long.Add(valueList[i]);
+                    }
                 }
             }
             else if (child.gameObject.CompareTag("MoreRead"))
@@ -477,7 +520,14 @@ public class GameManager : MonoBehaviour
                         var _valueList = _iw.GetValueFromInputField();
                         for (int i = 0; i < _valueList.Count; i++)
                         {
-                            inputFieldPreviews_type.Add(_valueList[i]);
+                            if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
+                            {
+                                inputFieldPreviews_type.Add(_valueList[i]);
+                            }
+                            else if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
+                            {
+                                inputFieldPreviews_long.Add(_valueList[i]);
+                            }
                         }
                     }
                 }
@@ -528,6 +578,15 @@ public class GameManager : MonoBehaviour
         {
             obj.SetActive(argJudgeNum != 2);
         }
+    }
+
+    public void GoNextSettingPage()
+    {
+        showingSettingPage = (ChangeMode)Mathf.Min((float)(showingSettingPage + 1), (float)ChangeMode.HOLD);
+    }
+    public void GoBackSettingPage()
+    {
+        showingSettingPage = (ChangeMode)Mathf.Max((float)(showingSettingPage - 1), (float)ChangeMode.TYPE);
     }
     #endregion
 
