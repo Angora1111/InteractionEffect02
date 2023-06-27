@@ -97,4 +97,21 @@ public class ModeButton : MonoBehaviour
     {
         return mode;
     }
+
+    public GameManager.EffectModeType GetEffectTypeMode()
+    {
+        if(mode == GameManager.ChangeMode.TYPE)
+        {
+            return changedMode_Type;
+        }
+        return GameManager.EffectModeType.NONE;
+    }
+    public GameManager.EffectModeHold GetEffectHoldMode()
+    {
+        if (mode == GameManager.ChangeMode.HOLD)
+        {
+            return changedMode_Hold;
+        }
+        return GameManager.EffectModeHold.NONE;
+    }
 }
