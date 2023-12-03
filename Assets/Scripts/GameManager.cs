@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Playables;
-using Unity.VisualScripting;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
+using AngoraUtility;
 
 public class GameManager : MonoBehaviour
 {
@@ -98,10 +96,14 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject settingPageNext;                      // 設定画面の進む矢印
     [SerializeField] GameObject settingPageBack;                      // 設定画面の戻る矢印
 
+    private float nextRotAnimDeg = 0;               // 回転演出の次の角度
+
     [Header("テスト用 --------------------------------------------------------------------")]
     [SerializeField] EffectModeType testMode_Type = EffectModeType.NONE;
     [SerializeField] EffectModeHold testMode_Hold = EffectModeHold.NONE;
     [SerializeField] bool test = false; // テスト用か否か
+
+    public bool fixAnimationMode = true;
 
     void Start()
     {
@@ -167,6 +169,9 @@ public class GameManager : MonoBehaviour
                     effectMode_Hold[i] = testMode_Hold;
                 }
             }
+
+            // 値の初期化
+            nextRotAnimDeg = 0;
 
             canStart = false;
             playableDirector.Stop();
@@ -235,6 +240,9 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"judge:{judgeIndex}, dir:{directionIndex}");
 
+        // ノーツ数の更新
+        NotesGenerator.CountUpNoteNum();
+
         switch (currentEffectMode_Type)
         {
             case EffectModeType.NONE:
@@ -242,9 +250,25 @@ public class GameManager : MonoBehaviour
             case EffectModeType.LANE_ROTATE_1:
                 if (isAction)
                 {
-                    RestartAction(currentEffectMode_Type, false, false, true);
+                    if(fixAnimationMode)
+                    {
+                        nextRotAnimDeg += 90;
+                        int rotDeg = Mathf.RoundToInt(nextRotAnimDeg - ExTransform.GetFixEulerAngles(laneGroup, ExTransform.AXIS.X, 0).z);
+                        if(nextRotAnimDeg >= 360f) nextRotAnimDeg = 0;
 
-                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(90, 0.3f));
+                        float waitTime = 0.3f;
+                        Debug.Log(NotesGenerator.DeltaTimeToNext);
+                        waitTime = NotesGenerator.DeltaTimeToNext;
+                        if (waitTime == -1f) waitTime = 0.3f;
+                        savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(rotDeg, waitTime));
+                    }
+                    else
+                    {
+                        RestartAction(currentEffectMode_Type, false, false, true);
+
+                        float waitTime = 0.3f;
+                        savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(90, waitTime));
+                    }
 
                     //「orderNum」で一部変化させることが可能
                 }
@@ -898,13 +922,19 @@ public class GameManager : MonoBehaviour
     {
         planeGroupRot = laneGroup.eulerAngles + new Vector3(0, 0, angleGap);//変化後の角度をリセット位置として設定
         //変化が完了するまでの実行数を設定する
+        /*
         float exe_times = SetExeTimes(waitTime, 20f);
-        int originalAngle = (int)laneGroup.transform.eulerAngles.z;
         for (int i = 1; i <= exe_times; i++)
         {
             yield return new WaitForSecondsRealtime(waitTime * fixedActionSpeed / exe_times);
             laneGroup.transform.eulerAngles = new Vector3(0, 0, originalAngle + angleGap * (Mathf.Sin(Mathf.PI * 0.5f * (i / exe_times))));
         }
+        */
+        int originalAngle = (int)laneGroup.transform.eulerAngles.z;
+        yield return StartCoroutine(new AnimCoroutine(waitTime * fixedActionSpeed, AnimCoroutine.TFunctionType.FastToSlow, t =>
+        {
+            laneGroup.transform.eulerAngles = new Vector3(0, 0, originalAngle + angleGap * t);
+        }).Anim());
     }
 
     /// <summary>
@@ -928,11 +958,17 @@ public class GameManager : MonoBehaviour
         {
             Vector3 originalScale = judgeCircle.localScale;
             float gap = maxScale - originalScale.x;
+            /*
             for (int i = 1; i <= ex_exe_times; i++)
             {
                 yield return new WaitForSecondsRealtime(waitTime_Ex * fixedActionSpeed / ex_exe_times);
                 judgeCircle.localScale = originalScale + new Vector3(gap * (i / ex_exe_times), gap * (i / ex_exe_times), 0);
             }
+            */
+            yield return StartCoroutine(new AnimCoroutine(waitTime_Ex * fixedActionSpeed, AnimCoroutine.TFunctionType.Liner, t =>
+            {
+                judgeCircle.localScale = originalScale + new Vector3(gap * t, gap * t, 0);
+            }).Anim());
         }
 
         //Shrink
@@ -940,11 +976,17 @@ public class GameManager : MonoBehaviour
         {
             Vector3 _originalScale = judgeCircle.localScale;
             float _gap = _originalScale.x - minScale;
+            /*
             for (int i = (int)sh_exe_times - 1; i >= 0; i--)
             {
                 yield return new WaitForSecondsRealtime(waitTime_Sh * fixedActionSpeed / sh_exe_times);
                 judgeCircle.localScale = new Vector3(minScale, minScale, _originalScale.z) + new Vector3(_gap * (i / sh_exe_times), _gap * (i / sh_exe_times), 0);
             }
+            */
+            yield return StartCoroutine(new AnimCoroutine(waitTime_Ex * fixedActionSpeed, AnimCoroutine.TFunctionType.Liner, t =>
+            {
+                judgeCircle.localScale = _originalScale + new Vector3(_gap * t, _gap * t, 0);
+            }).Anim());
         }
 
         yield return null;
@@ -985,37 +1027,55 @@ public class GameManager : MonoBehaviour
             //Debug.Log($"{gap.x}, {gap.y}");
         }
         Vector3 pos = laneGroup.transform.position;
-        float exe_times = 1f;
+        //float exe_times = 1f;
         switch (moveType)
         {
             case MovementType.STRAIGHT:
                 //変化が完了するまでの実行数を設定する
+                /*
                 exe_times = SetExeTimes(waitTime, 20f);
                 for (int i = 1; i <= exe_times; i++)
                 {
                     yield return new WaitForSecondsRealtime(waitTime * fixedActionSpeed / exe_times);
                     laneGroup.transform.position = pos + gap * (i / exe_times);
                 }
+                */
+                yield return StartCoroutine(new AnimCoroutine(waitTime * fixedActionSpeed, AnimCoroutine.TFunctionType.Liner, t =>
+                {
+                    laneGroup.transform.position = pos + gap * t;
+                }).Anim());
                 break;
 
             case MovementType.QUICK:
                 //変化が完了するまでの実行数を設定する
+                /*
                 exe_times = SetExeTimes(waitTime, 20f);
                 for (int i = 1; i <= exe_times; i++)
                 {
                     yield return new WaitForSecondsRealtime(waitTime * fixedActionSpeed / exe_times);
                     laneGroup.transform.position = pos + gap * (Mathf.Sin(Mathf.PI * 0.5f * (i / exe_times)));
                 }
+                */
+                yield return StartCoroutine(new AnimCoroutine(waitTime * fixedActionSpeed, AnimCoroutine.TFunctionType.FastToSlow, t =>
+                {
+                    laneGroup.transform.position = pos + gap * t;
+                }).Anim());
                 break;
 
             case MovementType.SLOW:
                 //変化が完了するまでの実行数を設定する
+                /*
                 exe_times = SetExeTimes(waitTime, 20f);
                 for (int i = 1; i <= exe_times; i++)
                 {
                     yield return new WaitForSecondsRealtime(waitTime * fixedActionSpeed / exe_times);
                     laneGroup.transform.position = pos + gap * (1f - Mathf.Cos(Mathf.PI * 0.5f * (i / exe_times)));
                 }
+                */
+                yield return StartCoroutine(new AnimCoroutine(waitTime * fixedActionSpeed, AnimCoroutine.TFunctionType.SlowToFast, t =>
+                {
+                    laneGroup.transform.position = pos + gap * t;
+                }).Anim());
                 break;
 
             case MovementType.WARP:
@@ -1077,36 +1137,60 @@ public class GameManager : MonoBehaviour
         //片道分の変化が完了するまでの実行数を設定する
         float oneWay_exe_times = SetExeTimes(waitTime, 3f);
 
+        /*
         for (int i = 1; i <= oneWay_exe_times; i++)
         {
             yield return new WaitForSecondsRealtime(waitTime / oneWay_exe_times);
             vibeObj.position = pos + amplitude * (i / oneWay_exe_times);
         }
+        */
+        yield return StartCoroutine(new AnimCoroutine(waitTime, AnimCoroutine.TFunctionType.Liner, t =>
+        {
+            vibeObj.position = pos + amplitude * t;
+        }).Anim());
         for (int j = 0; j < 3; j++)
         {
             amplitude -= gap;//移動幅を小さくする
             //順方向
             pos = vibeObj.position;
+            yield return StartCoroutine(new AnimCoroutine(waitTime / 2f, AnimCoroutine.TFunctionType.Liner, t =>
+            {
+                vibeObj.position = pos + amplitude * t * -2f;
+            }).Anim());
+            /*
             for (int i = 1; i <= oneWay_exe_times * 2f; i++)
             {
                 yield return new WaitForSecondsRealtime(waitTime / oneWay_exe_times);
                 vibeObj.position = pos + amplitude * -2 * (i / (oneWay_exe_times * 2f));
             }
+            */
             amplitude -= gap;//移動幅を小さくする
             //逆方向
             pos = vibeObj.position;
+            yield return StartCoroutine(new AnimCoroutine(waitTime / 2f, AnimCoroutine.TFunctionType.Liner, t =>
+            {
+                vibeObj.position = pos + amplitude * t * 2f;
+            }).Anim());
+            /*
             for (int i = 1; i <= oneWay_exe_times * 2f; i++)
             {
                 yield return new WaitForSecondsRealtime(waitTime / oneWay_exe_times);
                 vibeObj.position = pos + amplitude * 2 * (i / (oneWay_exe_times * 2f));
             }
+            */
         }
         pos = vibeObj.position;
+        yield return StartCoroutine(new AnimCoroutine(waitTime, AnimCoroutine.TFunctionType.Liner, t =>
+        {
+            vibeObj.position = pos + amplitude * t * -1f;
+        }).Anim());
+        /*
         for (int i = 1; i <= oneWay_exe_times; i++)
         {
             yield return new WaitForSecondsRealtime(waitTime / oneWay_exe_times);
             vibeObj.position = pos + amplitude * -1 * (i / oneWay_exe_times);
         }
+        */
         vibeObj.position = originalPos;
     }
     #endregion

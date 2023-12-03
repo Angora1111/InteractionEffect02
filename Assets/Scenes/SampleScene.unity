@@ -9129,8 +9129,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playableDirector: {fileID: 2114470375}
   songs:
-  - {fileID: 11400000, guid: fcb4095acf5d5344b8afc35b74284284, type: 2}
-  - {fileID: 11400000, guid: 17ad816af2e34df44a9d9f527462b0df, type: 2}
+  - song: {fileID: 11400000, guid: fcb4095acf5d5344b8afc35b74284284, type: 2}
+    timeOffset: 2.25
+  - song: {fileID: 11400000, guid: 17ad816af2e34df44a9d9f527462b0df, type: 2}
+    timeOffset: 2.183333
   dd: {fileID: 529968409}
   ng: {fileID: 1416512117}
 --- !u!114 &529968409
@@ -26373,6 +26375,7 @@ MonoBehaviour:
   testMode_Type: 0
   testMode_Hold: 0
   test: 0
+  fixAnimationMode: 1
 --- !u!4 &1607172138
 Transform:
   m_ObjectHideFlags: 0
@@ -28614,6 +28617,8 @@ MonoBehaviour:
   - {fileID: 521805939}
   - {fileID: 1313041201}
   - {fileID: 616190800}
+  - {fileID: 1701479764}
+  - {fileID: 1186923307}
   closeObjs:
   - {fileID: 1403752516}
 --- !u!1 &1763240968
@@ -33760,6 +33765,8 @@ MonoBehaviour:
   - {fileID: 521805939}
   - {fileID: 1313041201}
   - {fileID: 616190800}
+  - {fileID: 1701479764}
+  - {fileID: 1186923307}
 --- !u!114 &2109894380
 MonoBehaviour:
   m_ObjectHideFlags: 0

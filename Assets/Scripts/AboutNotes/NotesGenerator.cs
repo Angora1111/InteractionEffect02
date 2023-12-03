@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class NotesGenerator : MonoBehaviour
 {
@@ -16,9 +17,32 @@ public class NotesGenerator : MonoBehaviour
     private int generateCount = 0;
     private Stack<int>[] longIds;
 
-    private string dataPath;        // 譜面データのファイルパスのうち、固定の部分
-    private string notesMapPath;    // 譜面データのファイルパスのうち、変わる部分
-    private NotesMapData notesMap;  // 譜面データを格納するクラス
+    private string dataPath;                // 譜面データのファイルパスのうち、固定の部分
+    private string notesMapPath;            // 譜面データのファイルパスのうち、変わる部分
+    private static NotesMapData notesMap;   // 譜面データを格納するクラス
+
+    // ログデータ
+    private static float time;
+    private static int nextNoteNum;
+    public static float TimeOffset { get; set; }
+    /// <summary>
+    /// プレイ開始からの経過時間
+    /// </summary>
+    public static float Time { get { return time; } }
+    /// <summary>
+    /// 現在時間から次の始点ノーツが到着するまでの時間
+    /// </summary>
+    public static float DeltaTimeToNext
+    { 
+        get 
+        {
+            if (nextNoteNum < 0 || notesMap.notesData.Count <= nextNoteNum) return -1f;
+
+            Debug.Log($"now:{time}, next:{notesMap.notesData[nextNoteNum].startTime + TimeOffset}({nextNoteNum})");
+            return notesMap.notesData[nextNoteNum].startTime + TimeOffset - time; 
+        } 
+    }
+
 
     // 譜面データのクラス
     [System.Serializable]
@@ -62,6 +86,9 @@ public class NotesGenerator : MonoBehaviour
 
     private void Update()
     {
+        // 時間計測
+        time += UnityEngine.Time.deltaTime;
+
         // テスト用
         if (Input.GetKeyDown(KeyCode.J))
         {
@@ -128,6 +155,10 @@ public class NotesGenerator : MonoBehaviour
     /// </summary>
     public void StartGame()
     {
+        // ログデータをリセットする
+        time = 0f;
+        nextNoteNum = 0;
+
         // jsonファイルを読み込む
         string fileName = dataPath + notesMapPath;
         notesMap = LoadNotesMapData(fileName);
@@ -179,5 +210,13 @@ public class NotesGenerator : MonoBehaviour
 
             return JsonUtility.FromJson<NotesMapData>(datastr);
         }
+    }
+
+    /// <summary>
+    /// 次のノーツ番号を更新する
+    /// </summary>
+    public static void CountUpNoteNum()
+    {
+        nextNoteNum++;
     }
 }
