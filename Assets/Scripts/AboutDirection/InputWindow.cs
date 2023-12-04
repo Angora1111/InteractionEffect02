@@ -26,6 +26,11 @@ public class InputWindow : MonoBehaviour
     #region 実行外で設定するための部分
     private void OnValidate()
     {
+        SetObjects();
+    }
+
+    protected virtual void SetObjects()
+    {
         if (objNum != 0)// 値を消したときは反応しないようにする
         {
             // 値を補正する

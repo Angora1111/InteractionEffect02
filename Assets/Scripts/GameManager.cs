@@ -250,15 +250,18 @@ public class GameManager : MonoBehaviour
             case EffectModeType.LANE_ROTATE_1:
                 if (isAction)
                 {
-                    if(fixAnimationMode)
+                    int deg = Mathf.RoundToInt(inputFieldPreviews_type[judgeIndex * directionIndex][0]);
+                    float animTime = inputFieldPreviews_type[judgeIndex * directionIndex][1];
+
+                    if (fixAnimationMode)
                     {
-                        nextRotAnimDeg += 90;
+                        nextRotAnimDeg += deg;
                         int rotDeg = Mathf.RoundToInt(nextRotAnimDeg - ExTransform.GetFixEulerAngles(laneGroup, ExTransform.AXIS.X, 0).z);
+                        if (rotDeg < 0) rotDeg += 360;
                         if(nextRotAnimDeg >= 360f) nextRotAnimDeg = 0;
 
-                        float waitTime = 0.3f;
-                        Debug.Log(NotesGenerator.DeltaTimeToNext);
-                        waitTime = NotesGenerator.DeltaTimeToNext;
+                        float waitTime = NotesGenerator.DeltaTimeToNext;
+                        Debug.Log($"waitTime:{waitTime}");
                         if (waitTime == -1f) waitTime = 0.3f;
                         savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(rotDeg, waitTime));
                     }
@@ -266,8 +269,8 @@ public class GameManager : MonoBehaviour
                     {
                         RestartAction(currentEffectMode_Type, false, false, true);
 
-                        float waitTime = 0.3f;
-                        savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(90, waitTime));
+                        float waitTime = animTime;
+                        savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(deg, waitTime));
                     }
 
                     //ÅuorderNumÅvÇ≈àÍïîïœâªÇ≥ÇπÇÈÇ±Ç∆Ç™â¬î\
