@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
+using Newtonsoft.Json.Linq;
+using System;
 
 public class InputWindow : MonoBehaviour
 {
@@ -16,9 +18,18 @@ public class InputWindow : MonoBehaviour
     [HideInInspector]
     [SerializeField] protected int pobjNum = 1;
     protected List<GameObject> destroyedObjects;
+    /// <summary>
+    /// Inputfieldの数
+    /// </summary>
+    public int inputFieldCount { get { return objNum; } }
 
     #region 実行外で設定するための部分
     private void OnValidate()
+    {
+        SetObjects();
+    }
+
+    protected virtual void SetObjects()
     {
         if (objNum != 0)// 値を消したときは反応しないようにする
         {
@@ -83,9 +94,14 @@ public class InputWindow : MonoBehaviour
         gm = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 
+    private void OnEnable()
+    {
+        //gm.SetPriviousFloatFromInputField(modeButton);
+    }
+
     private void Update()
     {
-        gm.SetFloatFromInputField(modeButton);
+        //gm.SetFloatFromInputField(modeButton);
     }
 
     /// <summary>
@@ -106,5 +122,26 @@ public class InputWindow : MonoBehaviour
             }
         }
         return values;
+    }
+    /// <summary>
+    /// InputFieldの値をセットする
+    /// </summary>
+    /// <param name="argFloatList"></param>
+    public void SetValue(float argVal, int childNum)
+    {
+        int _index = 0;
+        foreach (Transform child in transform)
+        {
+            if (child.gameObject.TryGetComponent<InputField>(out var inputField))
+            {
+                if (_index == childNum)
+                {
+                    inputField.text = argVal.ToString();
+                    return;
+                }
+                _index++;
+            }
+        }
+        Debug.LogError($"指定した番号の Inputfield はありません : {childNum}");
     }
 }

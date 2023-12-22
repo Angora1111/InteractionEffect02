@@ -31,4 +31,10 @@ public class BoolWindow : MonoBehaviour
     {
         return isOn;
     }
+
+    public void SetBool(bool argBool)
+    {
+        if(argBool) slider.value = 1;
+        else        slider.value = 0;
+    }
 }

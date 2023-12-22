@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Playables;
-using Unity.VisualScripting;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
+using AngoraUtility;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +11,9 @@ public class GameManager : MonoBehaviour
     private readonly Color color_Perfect = new Color(1, 1, 0);  // yellow
     private readonly Color color_Good = new Color(0, 1, 0.255f);// green
     private readonly Color color_Miss = new Color(0, 0.583f, 1);// rightBlue
+    private const int FIXANIMMODE_INTERUPT = 0;
+    private const int FIXANIMMODE_COMPLETE = 1;
+    private const int FIXANIMMODE_FIXSPEED = 2;
 
     public enum ChangeMode
     {
@@ -67,33 +68,39 @@ public class GameManager : MonoBehaviour
     private int orderNum_Type = 0;  // 順番管理 
     private int orderNum_Hold = 0;
     [SerializeField] GameObject[] Squares;// 背景の格納用
-    [SerializeField] GameObject flashSquare;
+    [SerializeField] FlashSquare flashSquare;
     [SerializeField] AppearSquare square_Appear;    // 内→外の四角
     [SerializeField] PargeSquare square_Parge;      // パージする四角
     private GameObject pargingSquare;
     [SerializeField] GameObject squareGroup;        // 四角が入れられるところ
-    private List<Color> colorPreviews_appear;       // 色を格納するところ
-    private List<Color> colorPreviews_parge;        // 色を格納するところ
-    private List<bool> boolPreviews;                // bool値を格納するところ
-    private List<int> modePreviews;                 // dropdownのValueの値を格納するところ
-    private List<float> inputFieldPreviews_type;    // typeにおけるinputFieldの値を格納するところ
-    private List<float> inputFieldPreviews_long;    // longにおけるinputFieldの値を格納するところ
+
+    private List<Color>[] colorPreviews_appear;       // 色を格納するところ
+    private List<Color>[] colorPreviews_parge;        // 色を格納するところ
+    private List<bool>[] boolPreviews;                // bool値を格納するところ
+    private List<int>[] modePreviews;                 // dropdownのValueの値を格納するところ
+    private List<float>[] inputFieldPreviews_type;    // typeにおけるinputFieldの値を格納するところ
+    private List<float>[] inputFieldPreviews_long;    // longにおけるinputFieldの値を格納するところ
+    private EnumData.Judgement catchLongJudge;        // ロングノーツ始点における判定
+
     private bool isSetting = false; // 設定中かどうか
     private bool canStart = true;   // プレイ中か否か
     private float fixedActionSpeed = 1.0f;  // 変化の速度
     private Coroutine savedCoroutine = default;     // コルーチンの保存用
     private Coroutine[] savedTypeActions = default;
     private Coroutine[] savedHoldActions = default;
-    private Vector3 planeGroupPos;                  // 変化が実行される前の判定グループの位置
-    private Vector3 pjudgeCirclePos;                // 変化が実行される前の判定枠の位置
-    private Vector3 pjudgeCircleScale;              // 変化が実行される前の判定枠の大きさ
-    private Vector3 planeGroupRot;                  // 変化が実行される前の判定グループの角度
+    private Vector3 completedLaneGroupPos;      // 変化が完了した後の判定グループの位置
+    private Vector3 completedJudgeCirclePos;    // 変化が完了した後の判定枠の位置
+    private Vector3 completedJudgeCircleScale;  // 変化が完了した後の判定枠の大きさ
+    private Vector3 completedLaneGroupRot;      // 変化が完了した後の判定グループの角度
     [SerializeField] GameObject[] hideObjAtSetMiss; // Missの演出を設定するときに非表示にするオブジェクト
 
     public static ChangeMode showingSettingPage = ChangeMode.TYPE;    // 現在設定画面に表示中のページ番号
     [SerializeField] Text settingPageHeaderText;                      // 設定画面のヘッダーText
     [SerializeField] GameObject settingPageNext;                      // 設定画面の進む矢印
     [SerializeField] GameObject settingPageBack;                      // 設定画面の戻る矢印
+
+    [HideInInspector] public int fixAnimationMode = FIXANIMMODE_COMPLETE;   // 演出補正の方法
+    private float nextRotAnimDeg = 0;                                       // 回転演出の次の角度
 
     [Header("テスト用 --------------------------------------------------------------------")]
     [SerializeField] EffectModeType testMode_Type = EffectModeType.NONE;
@@ -103,18 +110,30 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         judgeSr = GameObject.Find("JudgeCircle").GetComponent<SpriteRenderer>();
-        colorPreviews_appear = new List<Color>();
-        colorPreviews_parge = new List<Color>();
-        boolPreviews = new List<bool>();
-        modePreviews = new List<int>();
-        inputFieldPreviews_type = new List<float>();
-        inputFieldPreviews_long = new List<float>();
+        colorPreviews_appear = new List<Color>[(int)(EnumData.Judgement.MAX - 1) * (int)(EffectModeType.MAX - 1)];
+        colorPreviews_parge = new List<Color>[(int)(EnumData.Judgement.MAX - 1) * (int)(EffectModeHold.MAX - 1)];
+        boolPreviews = new List<bool>[(int)(EnumData.Judgement.MAX - 1) * (int)(EffectModeType.MAX - 1)];
+        modePreviews = new List<int>[(int)(EnumData.Judgement.MAX - 1) * (int)(EffectModeType.MAX - 1)];
+        inputFieldPreviews_type = new List<float>[(int)(EnumData.Judgement.MAX - 1) * (int)(EffectModeType.MAX - 1)];
+        inputFieldPreviews_long = new List<float>[(int)(EnumData.Judgement.MAX - 1) * (int)(EffectModeHold.MAX - 1)];
+        for(int i = 0; i < (int)(EnumData.Judgement.MAX - 1) * (int)(EffectModeType.MAX - 1); i++)
+        {
+            colorPreviews_appear[i] = new List<Color>();
+            boolPreviews[i] = new List<bool>();
+            modePreviews[i] = new List<int>();
+            inputFieldPreviews_type[i] = new List<float>();
+        }
+        for(int i = 0; i < (int)(EnumData.Judgement.MAX - 1) * (int)(EffectModeHold.MAX - 1); i++)
+        {
+            colorPreviews_parge[i] = new List<Color>();
+            inputFieldPreviews_long[i] = new List<float>();
+        }
         savedTypeActions = new Coroutine[(int)EffectModeType.MAX];
         savedHoldActions = new Coroutine[(int)EffectModeHold.MAX];
-        planeGroupPos = laneGroup.position;
-        pjudgeCirclePos = judgeCircle.position;
-        pjudgeCircleScale = judgeCircle.localScale;
-        planeGroupRot = laneGroup.eulerAngles;
+        completedLaneGroupPos = laneGroup.position;
+        completedJudgeCirclePos = judgeCircle.position;
+        completedJudgeCircleScale = judgeCircle.localScale;
+        completedLaneGroupRot = laneGroup.eulerAngles;
         changeTimeLine.SetSong();
 
         int effectLength = (int)EnumData.Judgement.MAX;
@@ -153,6 +172,9 @@ public class GameManager : MonoBehaviour
                 }
             }
 
+            // 値の初期化
+            nextRotAnimDeg = 0;
+
             canStart = false;
             playableDirector.Stop();
             playableDirector.Play();
@@ -185,9 +207,9 @@ public class GameManager : MonoBehaviour
         if (savedTypeActions[(int)argTypeMode] != null)
         {
             StopCoroutine(savedTypeActions[(int)argTypeMode]);
-            if (isPosReset) { laneGroup.position = planeGroupPos; judgeCircle.position = pjudgeCirclePos; }
-            if (isScaleReset) { judgeCircle.localScale = pjudgeCircleScale; }
-            if (isRotReset) { laneGroup.eulerAngles = planeGroupRot; }
+            if (isPosReset) { laneGroup.position = completedLaneGroupPos; judgeCircle.position = completedJudgeCirclePos; }
+            if (isScaleReset) { judgeCircle.localScale = completedJudgeCircleScale; }
+            if (isRotReset) { laneGroup.eulerAngles = completedLaneGroupRot; }
         }
     }
 
@@ -203,9 +225,9 @@ public class GameManager : MonoBehaviour
         if (savedHoldActions[(int)argHoldMode] != null)
         {
             StopCoroutine(savedHoldActions[(int)argHoldMode]);
-            if (isPosReset) { laneGroup.position = planeGroupPos; judgeCircle.position = pjudgeCirclePos; }
-            if (isScaleReset) { judgeCircle.localScale = pjudgeCircleScale; }
-            if (isRotReset) { laneGroup.eulerAngles = planeGroupRot; }
+            if (isPosReset) { laneGroup.position = completedLaneGroupPos; judgeCircle.position = completedJudgeCirclePos; }
+            if (isScaleReset) { judgeCircle.localScale = completedJudgeCircleScale; }
+            if (isRotReset) { laneGroup.eulerAngles = completedLaneGroupRot; }
         }
     }
 
@@ -213,6 +235,15 @@ public class GameManager : MonoBehaviour
     {
         // 最新の演出を保存
         currentEffectMode_Type = effectMode_Type[(int)argJudgement];
+        // 判定の番号 + 1を保存
+        int judgeIndex = (int)argJudgement;
+        // 演出の番号を保存
+        int directionIndex = (int)currentEffectMode_Type - 1;
+
+        Debug.Log($"judge:{judgeIndex}, dir:{directionIndex}");
+
+        // ノーツ数の更新
+        NotesGenerator.CountUpNoteNum();
 
         switch (currentEffectMode_Type)
         {
@@ -221,9 +252,37 @@ public class GameManager : MonoBehaviour
             case EffectModeType.LANE_ROTATE_1:
                 if (isAction)
                 {
-                    RestartAction(currentEffectMode_Type, false, false, true);
+                    int deg = Mathf.RoundToInt(inputFieldPreviews_type[judgeIndex * directionIndex][0]);
+                    float animTime = inputFieldPreviews_type[judgeIndex * directionIndex][1];
 
-                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(90, 0.3f));
+                    if (fixAnimationMode == FIXANIMMODE_FIXSPEED)
+                    {
+                        RestartAction(currentEffectMode_Type, false, false, false);
+
+                        nextRotAnimDeg += deg;
+                        int rotDeg = Mathf.RoundToInt(nextRotAnimDeg - ExTransform.GetFixEulerAngles(laneGroup, ExTransform.AXIS.X, 0).z);
+                        if (rotDeg < 0) rotDeg += 360;
+                        if(nextRotAnimDeg >= 360f) nextRotAnimDeg = 0;
+
+                        float waitTime = NotesGenerator.DeltaTimeToNext;
+                        Debug.Log($"waitTime:{waitTime}");
+                        if (waitTime == -1f) waitTime = 0.3f;
+                        savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(rotDeg, waitTime));
+                    }
+                    else if(fixAnimationMode == FIXANIMMODE_COMPLETE)
+                    {
+                        RestartAction(currentEffectMode_Type, false, false, true);
+
+                        float waitTime = animTime;
+                        savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(deg, waitTime));
+                    }
+                    else if(fixAnimationMode == FIXANIMMODE_INTERUPT)
+                    {
+                        RestartAction(currentEffectMode_Type, false, false, false);
+
+                        float waitTime = animTime;
+                        savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(RotateJudgeCircleGap(deg, waitTime));
+                    }
 
                     //「orderNum」で一部変化させることが可能
                 }
@@ -241,20 +300,20 @@ public class GameManager : MonoBehaviour
             case EffectModeType.LANE_VIBE_1:
                 if (isAction)
                 {
-                    float customX = inputFieldPreviews_type[0];
-                    float customY = inputFieldPreviews_type[1];
+                    float customX = inputFieldPreviews_type[judgeIndex * directionIndex][0];
+                    float customY = inputFieldPreviews_type[judgeIndex * directionIndex][1];
 
                     RestartAction(currentEffectMode_Type, true, false, false);
 
                     Vector3 moveVec = Vector3.zero;
-                    switch (modePreviews[0])
+                    switch (modePreviews[judgeIndex * directionIndex][0])
                     {
                         case 0: moveVec = new Vector3(1.5f, 0, 0); break;           //平行
                         case 1: moveVec = new Vector3(0, 1.5f, 0); break;           //垂直
                         case 2: moveVec = new Vector3(customX, customY, 0); break;  //カスタム
                     }
 
-                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(VibeJudgeCircle(moveVec, boolPreviews[0], boolPreviews[1], boolPreviews[2]));
+                    savedTypeActions[(int)currentEffectMode_Type] = StartCoroutine(VibeJudgeCircle(moveVec, boolPreviews[judgeIndex * directionIndex][0], boolPreviews[judgeIndex * directionIndex][1], boolPreviews[judgeIndex * directionIndex][2]));
                 }
                 break;
             case EffectModeType.BACK_EXPAND_WITH_ROTATION_1:
@@ -263,10 +322,10 @@ public class GameManager : MonoBehaviour
                     switch (orderNum_Type % 2)
                     {
                         case 0:
-                            SquareAppearInit(colorPreviews_appear[0]);
+                            SquareAppearInit(colorPreviews_appear[judgeIndex * directionIndex][0]);
                             break;
                         case 1:
-                            SquareAppearInit(colorPreviews_appear[1]);
+                            SquareAppearInit(colorPreviews_appear[judgeIndex * directionIndex][1]);
                             break;
                     }
                 }
@@ -274,8 +333,10 @@ public class GameManager : MonoBehaviour
             case EffectModeType.BACK_FLASH_1:
                 if (isAction)
                 {
-                    flashSquare.SetActive(false);
-                    flashSquare.SetActive(true);
+                    flashSquare.gameObject.SetActive(false);
+                    flashSquare.gameObject.SetActive(true);
+                    Debug.Log(colorPreviews_appear[judgeIndex * directionIndex].Count);
+                    flashSquare.ChangeColor(colorPreviews_appear[judgeIndex * directionIndex][0]);
                 }
                 break;
         }
@@ -285,8 +346,16 @@ public class GameManager : MonoBehaviour
 
     public void HoldAction(EnumData.Judgement argJudgement, bool isAction = true)
     {
-        // 最新の演出を保存（最初だけ）
-        if(orderNum_Hold == 0)　currentEffectMode_Hold = effectMode_Hold[(int)argJudgement];
+        // 最新の演出と始点の判定を保存（最初だけ）
+        if (orderNum_Hold == 0)
+        {
+            currentEffectMode_Hold = effectMode_Hold[(int)argJudgement];
+            catchLongJudge = argJudgement;
+        }
+        // 判定の番号を保存
+        int judgeIndex = (int)argJudgement;
+        // 演出の番号を保存
+        int directionIndex = (int)currentEffectMode_Hold - 1;
 
         switch (currentEffectMode_Hold)
         {
@@ -312,9 +381,9 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case EffectModeHold.LANE_ARROW_1:
-                float drawDistance = inputFieldPreviews_long[0];
-                float fireMulInSuccess = inputFieldPreviews_long[1];
-                float fireMulInFailure = inputFieldPreviews_long[2];
+                float drawDistance = inputFieldPreviews_long[(int)catchLongJudge * directionIndex][0];
+                float fireMulInSuccess = inputFieldPreviews_long[(int)catchLongJudge * directionIndex][1];
+                float fireMulInFailure = inputFieldPreviews_long[(int)catchLongJudge * directionIndex][2];
 
                 if (isAction && (orderNum_Hold == 0 || (orderNum_Hold > 0 && argJudgement != EnumData.Judgement.MISS)))
                 {
@@ -347,7 +416,7 @@ public class GameManager : MonoBehaviour
                     switch (orderNum_Hold)
                     {
                         case 0:
-                            SquarePargeInit(colorPreviews_parge[0]);
+                            SquarePargeInit(colorPreviews_parge[judgeIndex * directionIndex][0]);
                             break;
                         case 1:
                             pargingSquare.GetComponent<PargeSquare>().SetKeepingFalse();
@@ -406,94 +475,309 @@ public class GameManager : MonoBehaviour
 
     #region 実行前の準備
     /// <summary>
+    /// 予定の色を、以前のものに合わせる
+    /// </summary>
+    /// <param name="button"></param>
+    public void SetPreviousColors(Transform button)
+    {
+        var list = new List<Color>();
+        var _buttonData = button.gameObject.GetComponent<ModeButton>();
+        switch (_buttonData.Getmode())
+        {
+            case ChangeMode.TYPE:
+                list = colorPreviews_appear[selectingEffectIndex * (int)(_buttonData.GetEffectTypeMode() - 1)];
+                break;
+            case ChangeMode.HOLD:
+                list = colorPreviews_parge[selectingEffectIndex * (int)(_buttonData.GetEffectHoldMode() - 1)];
+                break;
+            default:
+                break;
+        }
+
+        // 未設定なら抜ける
+        if (list == null) return;
+        if (list.Count == 0) return;
+
+        int _listIndex = 0;
+        foreach (Transform child in button)
+        {
+            if (child.gameObject.TryGetComponent<ColorImageData>(out var data) && child.gameObject.TryGetComponent<Image>(out Image image))
+            {
+                if (_listIndex >= list.Count) return;
+                image.color = list[_listIndex];
+                _listIndex++;
+            }
+        }
+    }
+    /// <summary>
     /// 予定の色をセットする
     /// </summary>
     /// <param name="button"></param>
     public void SetColors(Transform button)
     {
         var list = new List<Color>();
-        switch (button.gameObject.GetComponent<ModeButton>().Getmode())
-        {
-            case ChangeMode.TYPE:
-                list = colorPreviews_appear;
-                break;
-            case ChangeMode.HOLD:
-                list = colorPreviews_parge;
-                break;
-            default:
-                break;
-        }
-        if (list != null)
-        {
-            list.Clear();
-        }
+        var _newList = new List<Color>();
+        // 該当要素のデータを受け取る
         foreach (Transform child in button)
         {
-            if (child.gameObject.TryGetComponent<Image>(out Image image))
+            if (child.gameObject.TryGetComponent<ColorImageData>(out var data) && child.gameObject.TryGetComponent<Image>(out Image image))
             {
-                list.Add(image.color);
+                _newList.Add(image.color);
+            }
+        }
+
+        // 受け取ったデータがあれば反映
+        if(_newList.Count != 0)
+        {
+            var _buttonData = button.gameObject.GetComponent<ModeButton>();
+            switch (_buttonData.Getmode())
+            {
+                case ChangeMode.TYPE:
+                    list = colorPreviews_appear[selectingEffectIndex * (int)(_buttonData.GetEffectTypeMode() - 1)];
+                    break;
+                case ChangeMode.HOLD:
+                    list = colorPreviews_parge[selectingEffectIndex * (int)(_buttonData.GetEffectHoldMode() - 1)];
+                    break;
+                default:
+                    break;
+            }
+            if (list != null)
+            {
+                list.Clear();
+            }
+            for (int i = 0; i < _newList.Count; i++)
+            {
+                list.Add(_newList[i]);
             }
         }
     }
 
+    /// <summary>
+    /// 予定のbool値を、以前のものに合わせる
+    /// </summary>
+    /// <param name="button"></param>
+    public void SetPreviousBools(Transform button)
+    {
+        int _effectIndex = 0;
+        var _buttonData = button.gameObject.GetComponent<ModeButton>();
+        switch (_buttonData.Getmode())
+        {
+            case ChangeMode.TYPE:
+                _effectIndex = (int)(_buttonData.GetEffectTypeMode() - 1);
+                break;
+            case ChangeMode.HOLD:
+                _effectIndex = (int)(_buttonData.GetEffectHoldMode() - 1);
+                break;
+            default:
+                break;
+        }
+
+        // 未設定なら初期値にする
+        if (boolPreviews[selectingEffectIndex * _effectIndex] == null) return;
+        if (boolPreviews[selectingEffectIndex * _effectIndex].Count == 0) return;
+
+        int _index = 0;
+        foreach (Transform child in button)
+        {
+            if (child.gameObject.TryGetComponent<BoolWindow>(out BoolWindow bw))
+            {
+                if (_index >= boolPreviews[selectingEffectIndex * _effectIndex].Count) return;
+                bw.SetBool(boolPreviews[selectingEffectIndex * _effectIndex][_index]);
+                _index++;
+            }
+        }
+    }
     /// <summary>
     /// 予定のbool値をセットする
     /// </summary>
     /// <param name="button"></param>
     public void SetBools(Transform button)
     {
-        if (boolPreviews != null)
-        {
-            boolPreviews.Clear();
-        }
+        var list = new List<bool>();
+        var _newList = new List<bool>();
+        // 該当要素のデータを受け取る
         foreach (Transform child in button)
         {
             if (child.gameObject.TryGetComponent<BoolWindow>(out BoolWindow bw))
             {
-                boolPreviews.Add(bw.GetBool());
+                _newList.Add(bw.GetBool());
+            }
+        }
+
+        // 受け取ったデータがあれば反映
+        if (_newList.Count != 0)
+        {
+            var _buttonData = button.gameObject.GetComponent<ModeButton>();
+            switch (_buttonData.Getmode())
+            {
+                case ChangeMode.TYPE:
+                    list = boolPreviews[selectingEffectIndex * (int)(_buttonData.GetEffectTypeMode() - 1)];
+                    break;
+                case ChangeMode.HOLD:
+                    list = boolPreviews[selectingEffectIndex * (int)(_buttonData.GetEffectHoldMode() - 1)];
+                    break;
+                default:
+                    break;
+            }
+            if (list != null)
+            {
+                list.Clear();
+            }
+            for (int i = 0; i < _newList.Count; i++)
+            {
+                list.Add(_newList[i]);
             }
         }
     }
 
+    /// <summary>
+    /// 予定のint値を、以前のものに合わせる
+    /// </summary>
+    /// <param name="button"></param>
+    public void SetPreviousIntFromDropdown(Transform button)
+    {
+        int _effectIndex = 0;
+        var _buttonData = button.gameObject.GetComponent<ModeButton>();
+        switch (_buttonData.Getmode())
+        {
+            case ChangeMode.TYPE:
+                _effectIndex = (int)(_buttonData.GetEffectTypeMode() - 1);
+                break;
+            case ChangeMode.HOLD:
+                _effectIndex = (int)(_buttonData.GetEffectHoldMode() - 1);
+                break;
+            default:
+                break;
+        }
+
+        // 未設定なら抜ける
+        if (modePreviews[selectingEffectIndex * _effectIndex] == null) return;
+        if (modePreviews[selectingEffectIndex * _effectIndex].Count == 0) return;
+
+        int _index = 0;
+        foreach (Transform child in button)
+        {
+            if (child.gameObject.TryGetComponent<DropdownWindow>(out DropdownWindow ddw))
+            {
+                if (_index >= modePreviews[selectingEffectIndex * _effectIndex].Count) return;
+                ddw.SetValue(modePreviews[selectingEffectIndex * _effectIndex][_index]);
+                _index++;
+            }
+        }
+    }
     /// <summary>
     /// 予定のint値を、Dropdownから受け取ってセットする
     /// </summary>
     /// <param name="button"></param>
     public void SetIntFromDropdown(Transform button)
     {
-        if (modePreviews != null)
-        {
-            modePreviews.Clear();
-        }
+        var list = new List<int>();
+        var _newList = new List<int>();
+        // 該当要素のデータを受け取る
         foreach (Transform child in button)
         {
             if (child.gameObject.TryGetComponent<DropdownWindow>(out DropdownWindow ddw))
             {
-                modePreviews.Add(ddw.GetValueFromDropdown());
+                _newList.Add(ddw.GetValueFromDropdown());
             }
         }
+
+        // 受け取ったデータがあれば反映
+        if (_newList.Count != 0)
+        {
+            var _buttonData = button.gameObject.GetComponent<ModeButton>();
+            switch (_buttonData.Getmode())
+            {
+                case ChangeMode.TYPE:
+                    list = modePreviews[selectingEffectIndex * (int)(_buttonData.GetEffectTypeMode() - 1)];
+                    break;
+                case ChangeMode.HOLD:
+                    list = modePreviews[selectingEffectIndex * (int)(_buttonData.GetEffectHoldMode() - 1)];
+                    break;
+                default:
+                    break;
+            }
+            if (list != null)
+            {
+                list.Clear();
+            }
+            for (int i = 0; i < _newList.Count; i++)
+            {
+                list.Add(_newList[i]);
+            }
+        }
+
     }
 
     /// <summary>
-    /// 予定のfloat値を、InputFieldから受け取ってセットする
+    /// 予定のfloat値を、以前のものに合わせる
     /// </summary>
     /// <param name="button"></param>
-    public void SetFloatFromInputField(Transform button)
+    public void SetPreviousFloatFromInputField(Transform button)
     {
-        if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
+        var list = new List<float>();
+        var _buttonData = button.GetComponent<ModeButton>();
+        if (_buttonData.Getmode() == ChangeMode.TYPE)
         {
             if (inputFieldPreviews_type != null)
             {
-                inputFieldPreviews_type.Clear();
+                list = inputFieldPreviews_type[selectingEffectIndex * (int)(_buttonData.GetEffectTypeMode() - 1)];
             }
         }
         else if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
         {
             if (inputFieldPreviews_long != null)
             {
-                inputFieldPreviews_long.Clear();
+                list =inputFieldPreviews_long[selectingEffectIndex * (int)(_buttonData.GetEffectHoldMode() - 1)];
             }
         }
+
+        // 未設定なら抜ける
+        if (list == null) return;
+        if (list.Count == 0) return;
+
+        int _overallIndex = 0;
+        int _firstIndex = 0;
+        int _morereadIndex = 0;
+        foreach (Transform child in button)
+        {
+            if (child.gameObject.TryGetComponent<InputWindow>(out var iw))
+            {
+                for (int i = 0; i < iw.inputFieldCount; i++)
+                {
+                    if (_overallIndex >= list.Count) return;
+                    iw.SetValue(list[_overallIndex], _firstIndex);
+                    _overallIndex++;
+                    _firstIndex++;
+                }
+            }
+            else if (child.gameObject.CompareTag("MoreRead"))
+            {
+                foreach (Transform _child in child)
+                {
+                    if (_child.gameObject.TryGetComponent<InputWindow>(out var _iw))
+                    {
+                        for (int i = 0; i < _iw.inputFieldCount; i++)
+                        {
+                            if (_overallIndex >= list.Count) return;
+                            _iw.SetValue(list[_overallIndex], _morereadIndex);
+                            _overallIndex++;
+                            _morereadIndex++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /// <summary>
+    /// 予定のfloat値を、InputFieldから受け取ってセットする
+    /// </summary>
+    /// <param name="button"></param>
+    public void SetFloatFromInputField(Transform button)
+    {
+        var list = new List<float>();
+        var _newList = new List<float>();
+        // 該当要素のデータを受け取る
         foreach (Transform child in button)
         {
             if (child.gameObject.TryGetComponent<InputWindow>(out var iw))
@@ -501,14 +785,7 @@ public class GameManager : MonoBehaviour
                 var valueList = iw.GetValueFromInputField();
                 for (int i = 0; i < valueList.Count; i++)
                 {
-                    if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
-                    {
-                        inputFieldPreviews_type.Add(valueList[i]);
-                    }
-                    else if(button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
-                    {
-                        inputFieldPreviews_long.Add(valueList[i]);
-                    }
+                    _newList.Add(valueList[i]);
                 }
             }
             else if (child.gameObject.CompareTag("MoreRead"))
@@ -520,17 +797,38 @@ public class GameManager : MonoBehaviour
                         var _valueList = _iw.GetValueFromInputField();
                         for (int i = 0; i < _valueList.Count; i++)
                         {
-                            if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.TYPE)
-                            {
-                                inputFieldPreviews_type.Add(_valueList[i]);
-                            }
-                            else if (button.GetComponent<ModeButton>().Getmode() == ChangeMode.HOLD)
-                            {
-                                inputFieldPreviews_long.Add(_valueList[i]);
-                            }
+                            _newList.Add(_valueList[i]);
                         }
                     }
                 }
+            }
+        }
+
+        // 受け取ったデータがあれば反映
+        if (_newList.Count != 0)
+        {
+            var _buttonData = button.GetComponent<ModeButton>();
+            if (_buttonData.Getmode() == ChangeMode.TYPE)
+            {
+                if (inputFieldPreviews_type != null)
+                {
+                    list = inputFieldPreviews_type[selectingEffectIndex * (int)(_buttonData.GetEffectTypeMode() - 1)];
+                }
+            }
+            else if (_buttonData.Getmode() == ChangeMode.HOLD)
+            {
+                if (inputFieldPreviews_long != null)
+                {
+                    list = inputFieldPreviews_long[selectingEffectIndex * (int)(_buttonData.GetEffectHoldMode() - 1)];
+                }
+            }
+            if (list != null)
+            {
+                list.Clear();
+            }
+            for(int i = 0; i < _newList.Count; i++)
+            {
+                list.Add(_newList[i]);
             }
         }
     }
@@ -588,6 +886,15 @@ public class GameManager : MonoBehaviour
     {
         showingSettingPage = (ChangeMode)Mathf.Max((float)(showingSettingPage - 1), (float)ChangeMode.TYPE);
     }
+
+    /// <summary>
+    /// 演出の補正方法を設定する
+    /// </summary>
+    /// <param name="argNum"></param>
+    public void SetFixAnimMode(int argNum)
+    {
+        fixAnimationMode = argNum;
+    }
     #endregion
 
     #region 変化ごとの処理
@@ -636,15 +943,12 @@ public class GameManager : MonoBehaviour
     /// <returns></returns>
     IEnumerator RotateJudgeCircleGap(int angleGap, float waitTime)
     {
-        planeGroupRot = laneGroup.eulerAngles + new Vector3(0, 0, angleGap);//変化後の角度をリセット位置として設定
-        //変化が完了するまでの実行数を設定する
-        float exe_times = SetExeTimes(waitTime, 20f);
+        completedLaneGroupRot = laneGroup.eulerAngles + new Vector3(0, 0, angleGap);//変化後の角度をリセット位置として設定
         int originalAngle = (int)laneGroup.transform.eulerAngles.z;
-        for (int i = 1; i <= exe_times; i++)
+        yield return StartCoroutine(new AnimCoroutine(waitTime * fixedActionSpeed, AnimCoroutine.TFunctionType.FastToSlow, t =>
         {
-            yield return new WaitForSecondsRealtime(waitTime * fixedActionSpeed / exe_times);
-            laneGroup.transform.eulerAngles = new Vector3(0, 0, originalAngle + angleGap * (Mathf.Sin(Mathf.PI * 0.5f * (i / exe_times))));
-        }
+            laneGroup.transform.eulerAngles = new Vector3(0, 0, originalAngle + angleGap * t);
+        }).Anim());
     }
 
     /// <summary>
@@ -657,22 +961,17 @@ public class GameManager : MonoBehaviour
     /// <returns></returns>
     IEnumerator SlimeCircle(float waitTime_Ex, float waitTime_Sh, float maxScale, float minScale)
     {
-        pjudgeCircleScale = judgeCircle.localScale;//変化前の大きさをリセット位置として設定
-
-        //変化が完了するまでの実行数を設定する
-        float ex_exe_times = SetExeTimes(waitTime_Ex, 6f);
-        float sh_exe_times = SetExeTimes(waitTime_Sh, 6f);
+        completedJudgeCircleScale = judgeCircle.localScale;//変化前の大きさをリセット位置として設定
 
         //Expand
         if (maxScale >= 0)
         {
             Vector3 originalScale = judgeCircle.localScale;
             float gap = maxScale - originalScale.x;
-            for (int i = 1; i <= ex_exe_times; i++)
+            yield return StartCoroutine(new AnimCoroutine(waitTime_Ex * fixedActionSpeed, AnimCoroutine.TFunctionType.Liner, t =>
             {
-                yield return new WaitForSecondsRealtime(waitTime_Ex * fixedActionSpeed / ex_exe_times);
-                judgeCircle.localScale = originalScale + new Vector3(gap * (i / ex_exe_times), gap * (i / ex_exe_times), 0);
-            }
+                judgeCircle.localScale = originalScale + new Vector3(gap * t, gap * t, 0);
+            }).Anim());
         }
 
         //Shrink
@@ -680,11 +979,10 @@ public class GameManager : MonoBehaviour
         {
             Vector3 _originalScale = judgeCircle.localScale;
             float _gap = _originalScale.x - minScale;
-            for (int i = (int)sh_exe_times - 1; i >= 0; i--)
+            yield return StartCoroutine(new AnimCoroutine(waitTime_Ex * fixedActionSpeed, AnimCoroutine.TFunctionType.Liner, t =>
             {
-                yield return new WaitForSecondsRealtime(waitTime_Sh * fixedActionSpeed / sh_exe_times);
-                judgeCircle.localScale = new Vector3(minScale, minScale, _originalScale.z) + new Vector3(_gap * (i / sh_exe_times), _gap * (i / sh_exe_times), 0);
-            }
+                judgeCircle.localScale = _originalScale + new Vector3(_gap * t, _gap * t, 0);
+            }).Anim());
         }
 
         yield return null;
@@ -725,37 +1023,27 @@ public class GameManager : MonoBehaviour
             //Debug.Log($"{gap.x}, {gap.y}");
         }
         Vector3 pos = laneGroup.transform.position;
-        float exe_times = 1f;
         switch (moveType)
         {
             case MovementType.STRAIGHT:
-                //変化が完了するまでの実行数を設定する
-                exe_times = SetExeTimes(waitTime, 20f);
-                for (int i = 1; i <= exe_times; i++)
+                yield return StartCoroutine(new AnimCoroutine(waitTime * fixedActionSpeed, AnimCoroutine.TFunctionType.Liner, t =>
                 {
-                    yield return new WaitForSecondsRealtime(waitTime * fixedActionSpeed / exe_times);
-                    laneGroup.transform.position = pos + gap * (i / exe_times);
-                }
+                    laneGroup.transform.position = pos + gap * t;
+                }).Anim());
                 break;
 
             case MovementType.QUICK:
-                //変化が完了するまでの実行数を設定する
-                exe_times = SetExeTimes(waitTime, 20f);
-                for (int i = 1; i <= exe_times; i++)
+                yield return StartCoroutine(new AnimCoroutine(waitTime * fixedActionSpeed, AnimCoroutine.TFunctionType.FastToSlow, t =>
                 {
-                    yield return new WaitForSecondsRealtime(waitTime * fixedActionSpeed / exe_times);
-                    laneGroup.transform.position = pos + gap * (Mathf.Sin(Mathf.PI * 0.5f * (i / exe_times)));
-                }
+                    laneGroup.transform.position = pos + gap * t;
+                }).Anim());
                 break;
 
             case MovementType.SLOW:
-                //変化が完了するまでの実行数を設定する
-                exe_times = SetExeTimes(waitTime, 20f);
-                for (int i = 1; i <= exe_times; i++)
+                yield return StartCoroutine(new AnimCoroutine(waitTime * fixedActionSpeed, AnimCoroutine.TFunctionType.SlowToFast, t =>
                 {
-                    yield return new WaitForSecondsRealtime(waitTime * fixedActionSpeed / exe_times);
-                    laneGroup.transform.position = pos + gap * (1f - Mathf.Cos(Mathf.PI * 0.5f * (i / exe_times)));
-                }
+                    laneGroup.transform.position = pos + gap * t;
+                }).Anim());
                 break;
 
             case MovementType.WARP:
@@ -795,8 +1083,8 @@ public class GameManager : MonoBehaviour
     /// <returns></returns>
     IEnumerator VibeJudgeCircle(Vector3 originalAmplitude, bool attenuation, bool local, bool withLane)
     {
-        planeGroupPos = laneGroup.position;//変化前の位置をリセット位置として設定
-        pjudgeCirclePos = judgeCircle.position;//変化前の位置をリセット位置として設定
+        completedLaneGroupPos = laneGroup.position;//変化前の位置をリセット位置として設定
+        completedJudgeCirclePos = judgeCircle.position;//変化前の位置をリセット位置として設定
 
         Transform vibeObj = judgeCircle;
         if (withLane) { vibeObj = laneGroup; }//withLaneがtrueなら、レーンも動く
@@ -814,39 +1102,33 @@ public class GameManager : MonoBehaviour
         Vector3 amplitude = originalAmplitude;
         Vector3 pos = vibeObj.position;
         Vector3 originalPos = pos;
-        //片道分の変化が完了するまでの実行数を設定する
-        float oneWay_exe_times = SetExeTimes(waitTime, 3f);
 
-        for (int i = 1; i <= oneWay_exe_times; i++)
+        yield return StartCoroutine(new AnimCoroutine(waitTime, AnimCoroutine.TFunctionType.Liner, t =>
         {
-            yield return new WaitForSecondsRealtime(waitTime / oneWay_exe_times);
-            vibeObj.position = pos + amplitude * (i / oneWay_exe_times);
-        }
+            vibeObj.position = pos + amplitude * t;
+        }).Anim());
         for (int j = 0; j < 3; j++)
         {
             amplitude -= gap;//移動幅を小さくする
             //順方向
             pos = vibeObj.position;
-            for (int i = 1; i <= oneWay_exe_times * 2f; i++)
+            yield return StartCoroutine(new AnimCoroutine(waitTime / 2f, AnimCoroutine.TFunctionType.Liner, t =>
             {
-                yield return new WaitForSecondsRealtime(waitTime / oneWay_exe_times);
-                vibeObj.position = pos + amplitude * -2 * (i / (oneWay_exe_times * 2f));
-            }
+                vibeObj.position = pos + amplitude * t * -2f;
+            }).Anim());
             amplitude -= gap;//移動幅を小さくする
             //逆方向
             pos = vibeObj.position;
-            for (int i = 1; i <= oneWay_exe_times * 2f; i++)
+            yield return StartCoroutine(new AnimCoroutine(waitTime / 2f, AnimCoroutine.TFunctionType.Liner, t =>
             {
-                yield return new WaitForSecondsRealtime(waitTime / oneWay_exe_times);
-                vibeObj.position = pos + amplitude * 2 * (i / (oneWay_exe_times * 2f));
-            }
+                vibeObj.position = pos + amplitude * t * 2f;
+            }).Anim());
         }
         pos = vibeObj.position;
-        for (int i = 1; i <= oneWay_exe_times; i++)
+        yield return StartCoroutine(new AnimCoroutine(waitTime, AnimCoroutine.TFunctionType.Liner, t =>
         {
-            yield return new WaitForSecondsRealtime(waitTime / oneWay_exe_times);
-            vibeObj.position = pos + amplitude * -1 * (i / oneWay_exe_times);
-        }
+            vibeObj.position = pos + amplitude * t * -1f;
+        }).Anim());
         vibeObj.position = originalPos;
     }
     #endregion

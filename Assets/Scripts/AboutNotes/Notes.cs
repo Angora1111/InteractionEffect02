@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using AngoraUtility;
 
 public class Notes : MonoBehaviour
 {
@@ -28,6 +27,9 @@ public class Notes : MonoBehaviour
     private void Update()
     {
         totalTime += Time.deltaTime;
+
+        // 回転しないようにする
+        transform.localEulerAngles = Vector3.zero;
 
         if (startTime != -1 && startTime <= totalTime)
         {
@@ -90,6 +92,7 @@ public class Notes : MonoBehaviour
     /// </summary>
     protected void Disappear()
     {
+        // 自身を削除
         Destroy(gameObject);
     }
 
@@ -98,6 +101,9 @@ public class Notes : MonoBehaviour
     /// </summary>
     protected void MissByNeglect()
     {
+        // ノーツ数の更新
+        NotesGenerator.CountUpNoteNum();
+
         Debug.Log($"【lane:{lane}, id:{id}】ノーツを取り逃しました...");
         gm.ShowJudge(EnumData.Judgement.MISS);
         Disappear();
@@ -151,7 +157,8 @@ public class Notes : MonoBehaviour
         if (StrikeNoteManager.GetIsStruck(lane)) { return EnumData.Judgement.NONE; }
 
         float radius = CommonData.missDist;
-        RaycastHit2D[] hit2Ds = Physics2D.CapsuleCastAll(judgeBarCircle.position, new Vector2(radius * 2, 1f), CapsuleDirection2D.Horizontal, laneObj.localEulerAngles.z, Vector2.zero);
+        var capsuleDeg = ExTransform.GetFixEulerAngles(laneObj, ExTransform.AXIS.X, 0).z;
+        RaycastHit2D[] hit2Ds = Physics2D.CapsuleCastAll(judgeBarCircle.position, new Vector2(radius * 2, 1f), CapsuleDirection2D.Horizontal, capsuleDeg, Vector2.zero);
         RaycastHit2D hit2D = default;
         // 最もレーンにおいて下にあるノーツが自分自身であるかどうかを確認する
         if (IsMatchClosestNote(ref hit2Ds, ref hit2D))
